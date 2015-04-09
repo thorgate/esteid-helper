@@ -7,7 +7,7 @@
     "build": "webpack --config cfg/prod.js --progress --profile --colors",
     "dev_build": "webpack --config cfg/dev.js --progress --profile --colors"
   },
-  "main": "lib.js",
+  "main": "dist/Esteid.main.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/thorgate/esteid-helper"

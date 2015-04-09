@@ -6,7 +6,6 @@ var base = require('./base.js');
 
 module.exports = _.extend(base, {
     plugins: [
-        new webpack.optimize.UglifyJsPlugin(),
         new webpack.optimize.DedupePlugin(),
         new webpack.DefinePlugin({
             "process.env": {

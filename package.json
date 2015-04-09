@@ -1,0 +1,29 @@
+{
+  "name": "esteid-helper",
+  "version": "0.0.1",
+  "description": "",
+  "author": "Thorgate <hi@thorgate.eu>",
+  "scripts": {
+    "build": "webpack --config cfg/prod.js --progress --profile --colors",
+    "dev_build": "webpack --config cfg/dev.js --progress --profile --colors"
+  },
+  "main": "lib.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thorgate/esteid-helper"
+  },
+  "devDependencies": {
+    "babel-core": "^4.7.9",
+    "babel-loader": "^4.1.0",
+    "exports-loader": "^0.6.2",
+    "expose-loader": "^0.6.0",
+    "imports-loader": "^0.6.3",
+    "webpack": "^1.7.3"
+  },
+  "dependencies": {
+    "lodash": "^3.6.0",
+    "superagent": "^1.1.0"
+  },
+  "private": true,
+  "license": "BSD"
+}

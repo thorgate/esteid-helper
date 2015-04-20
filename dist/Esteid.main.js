@@ -101,9 +101,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
-	var _ = _interopRequire(__webpack_require__(4));
+	var _ = _interopRequire(__webpack_require__(5));
 
-	var request = _interopRequire(__webpack_require__(5));
+	var request = _interopRequire(__webpack_require__(6));
 
 	var IdCardManager = _interopRequire(__webpack_require__(3));
 
@@ -129,7 +129,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }, kwargs);
 
 	        // construct the idCardManager
-	        this.idCardManager = new IdCardManager(kwargs.language, this.onIdCardReady.bind(this), this.onIdCardReceiveCertificate.bind(this), this.onIdCardSigned.bind(this), this.onIdCardError.bind(this));
+	        this.idCardManager = new IdCardManager(kwargs.language);
 
 	        this.idEndpoints = kwargs.idEndpoints;
 	        this.midEndpoints = kwargs.midEndpoints;
@@ -138,98 +138,103 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _createClass(IdentificationManager, {
 	        sign: {
 	            value: function sign(signType, extraData, callBack) {
-	                if (signType === IdentificationManager.SIGN_ID) {
-	                    this._idExtraData = extraData;
-	                    this._idCallBack = callBack;
+	                var _this = this;
 
-	                    // Init id-card plugin
-	                    this.idCardManager.initializeIdCard();
-	                } else if (signType === IdentificationManager.SIGN_MOBILE) {
-	                    request.post(this.midEndpoints.start).type("form").send(extraData).end(function (err, res) {
-	                        callBack(res.ok, res.body);
+	                return new Promise(function (resolve, reject) {
+	                    if (signType === IdentificationManager.SIGN_ID) {
+	                        _this.__signHandleId(extraData, resolve, reject);
+	                    } else if (signType === IdentificationManager.SIGN_MOBILE) {
+	                        _this.__signHandleMid(extraData, resolve, reject);
+	                    } else {
+	                        reject("IdentificationManager: Bad signType");
+	                    }
+	                });
+	            }
+	        },
+	        __signHandleId: {
+	            value: function __signHandleId(extraData, resolve, reject) {
+	                var _this = this;
+
+	                this.idCardManager.initializeIdCard().then(function () {
+	                    _this.idCardManager.getCertificate().then(function () {
+	                        var prepareData = _this.idCardManager.prepareSignatureData;
+
+	                        request.post(_this.idEndpoints.start).type("form").send({ certificate: prepareData.certData, token_id: prepareData.tokenId }).send(extraData).end(function (err, res) {
+	                            if (res.ok && res.body.success) {
+	                                _this.__attemptSign(res.body.id, res.body.digest, extraData, resolve, reject);
+	                            } else {
+	                                reject(res.body);
+	                            }
+	                        });
+	                    }, reject);
+	                }, reject);
+	            }
+	        },
+	        __attemptSign: {
+	            value: function __attemptSign(signatureId, signatureDigest, extraData, resolve, reject) {
+	                var _this = this;
+
+	                this.idCardManager.signHexData(signatureDigest).then(function () {
+	                    var finalizeData = _this.idCardManager.finalizeSignatureData;
+	                    request.post(_this.idEndpoints.finish).type("form").send({ signature_value: finalizeData.signature, signature_id: signatureId }).send(extraData).end(function (err, res) {
+	                        if (res.ok && res.body.success) {
+	                            resolve(res.body);
+	                        } else {
+	                            reject(res.body);
+	                        }
 	                    });
-	                } else {
-	                    console.error("IdentificationManager: Bad signType");
-	                }
+	                }, reject);
+	            }
+	        },
+	        __signHandleMid: {
+	            value: function __signHandleMid(extraData, resolve, reject) {
+	                request.post(this.midEndpoints.start).type("form").send(extraData).end(function (err, res) {
+	                    if (res.ok && res.body.success) {
+	                        resolve(res.body);
+	                    } else {
+	                        reject(res.body);
+	                    }
+	                });
 	            }
 	        },
 	        midStatus: {
-	            value: function midStatus(challengeId, extraData, callBack) {
+	            value: function midStatus(challengeId, extraData) {
 	                var _this = this;
 
-	                if (challengeId) {
-
-	                    var doRequest = function () {
-	                        request.post(_this.midEndpoints.status).type("form").send(extraData).end(function (err, res) {
-	                            if (res.ok) {
-	                                if (!res.body.success) {
-	                                    if (res.body.pending) {
-	                                        // Still pending, try again in 1s
-	                                        setTimeout(doRequest, 1000);
+	                return new Promise(function (resolve, reject) {
+	                    if (challengeId) {
+	                        var doRequest = function () {
+	                            request.post(_this.midEndpoints.status).type("form").send(extraData).end(function (err, res) {
+	                                if (res.ok) {
+	                                    if (!res.body.success) {
+	                                        if (res.body.pending) {
+	                                            // Still pending, try again in 1s
+	                                            setTimeout(doRequest, 1000);
+	                                        } else {
+	                                            // Got a failure, lets notify the requester
+	                                            reject(res.body);
+	                                        }
 	                                    } else {
-	                                        // Got a failure, lets notify the requester
-	                                        callBack(res.ok, res.body);
+	                                        // Process complete
+	                                        resolve(res.body);
 	                                    }
 	                                } else {
-	                                    // Process complete
-	                                    callBack(res.ok, res.body);
+	                                    // Got a failure, lets notify the requester
+	                                    reject(res.body);
 	                                }
-	                            } else {
-	                                // Got a failure, lets notify the requester
-	                                callBack(res.ok, res.body);
-	                            }
-	                        });
-	                    };
+	                            });
+	                        };
 
-	                    doRequest();
-	                }
-	            }
-	        },
-	        onIdCardReady: {
-	            value: function onIdCardReady() {
-	                // Call getCertificate
-	                this.idCardManager.getCertificate();
-	            }
-	        },
-	        onIdCardReceiveCertificate: {
-	            value: function onIdCardReceiveCertificate() {
-	                var _this = this;
-
-	                var prepareData = this.idCardManager.prepareSignatureData;
-
-	                request.post(this.idEndpoints.start).type("form").send({ certificate: prepareData.certData, token_id: prepareData.tokenId }).send(this._idExtraData).end(function (err, res) {
-	                    if (res.ok && res.body.success) {
-	                        _this.attemptSign(res.body.id, res.body.digest);
+	                        doRequest();
 	                    } else {
-	                        _this.onIdCardError(res.body);
+	                        reject("skipped");
 	                    }
 	                });
 	            }
 	        },
-	        attemptSign: {
-	            value: function attemptSign(signatureId, signatureDigest) {
-	                this._signatureId = signatureId;
-	                this.idCardManager.signHexData(signatureDigest);
-	            }
-	        },
-	        onIdCardSigned: {
-	            value: function onIdCardSigned() {
-	                var _this = this;
-
-	                var finalizeData = this.idCardManager.finalizeSignatureData;
-
-	                request.post(this.idEndpoints.finish).type("form").send({ signature_value: finalizeData.signature, signature_id: this._signatureId }).send(this._idExtraData).end(function (err, res) {
-	                    if (res.ok && res.body.success) {
-	                        _this._idCallBack(res.ok, res.body);
-	                    } else {
-	                        _this.onIdCardError(res.body);
-	                    }
-	                });
-	            }
-	        },
-	        onIdCardError: {
-	            value: function onIdCardError(ex) {
-	                this._idCallBack(false, ex);
+	        getError: {
+	            value: function getError(err) {
+	                return this.idCardManager.getError(err);
 	            }
 	        }
 	    });
@@ -255,6 +260,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+
+	var makeDict = __webpack_require__(4).makeDict;
+
 	var LANGUAGE_ET = "EST";
 	exports.LANGUAGE_ET = LANGUAGE_ET;
 	var LANGUAGE_EN = "ENG";
@@ -266,93 +274,95 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.LANGUAGE_LT = LANGUAGE_LT;
 	var LANGUAGES = [LANGUAGE_ET, LANGUAGE_EN, LANGUAGE_RU, LANGUAGE_LT];
 
+	var errorMessages = {
+	    user_cancel: makeDict([[LANGUAGE_ET, "Allkirjastamine katkestati"], [LANGUAGE_EN, "Signing was cancelled"], [LANGUAGE_LT, "Pasirašymas nutrauktas"], [LANGUAGE_RU, "Подпись была отменена"]]),
+
+	    no_certificates: makeDict([[LANGUAGE_ET, "Sertifikaate ei leitud"], [LANGUAGE_EN, "Certificate not found"], [LANGUAGE_LT, "Nerastas sertifikatas"], [LANGUAGE_RU, "Сертификат не найден"]]),
+
+	    invalid_argument: makeDict([[LANGUAGE_ET, "Vigane sertifikaadi identifikaator"], [LANGUAGE_EN, "Invalid certificate identifier"], [LANGUAGE_LT, "Neteisingas sertifikato identifikatorius"], [LANGUAGE_RU, "Неверный идентификатор сертификата"]]),
+
+	    no_implementation: makeDict([[LANGUAGE_ET, "Vajalik tarkvara on puudu"], [LANGUAGE_EN, "Unable to find software"], [LANGUAGE_LT, "Nerasta programinės įranga"], [LANGUAGE_RU, "Отсутствует необходимое программное обеспечение"]]),
+
+	    technical_error: makeDict([[LANGUAGE_ET, "Tehniline viga"], [LANGUAGE_EN, "Technical error"], [LANGUAGE_LT, "Techninė klaida"], [LANGUAGE_RU, "Техническая ошибка"]]),
+
+	    not_allowed: makeDict([[LANGUAGE_ET, "Veebis allkirjastamise käivitamine on võimalik vaid https aadressilt"], [LANGUAGE_EN, "Web signing is allowed only from https:// URL"], [LANGUAGE_LT, "Web signing is allowed only from https:// URL"], [LANGUAGE_RU, "Подпись в интернете возможна только с URL-ов, начинающихся с https://"]]) };
+
 	var IdCardManager = (function () {
-	    function IdCardManager(language, onReady, onStoreCertificate, onSigned, onError) {
+	    function IdCardManager(language) {
 	        _classCallCheck(this, IdCardManager);
-
-	        if (onReady) {
-	            this.onReady = onReady;
-	        }
-
-	        if (onError) {
-	            this.onError = onError;
-	        }
-
-	        if (onStoreCertificate) {
-	            this.onStoreCertificate = onStoreCertificate;
-	        }
-
-	        if (onSigned) {
-	            this.onSigned = onSigned;
-	        }
 
 	        this.language = language || LANGUAGE_ET;
 
-	        this._version = null;
-	        this._libaryVersion = libraryVersion;
-
-	        this._pluginHandler = null;
 	        this._cert = null;
-	        this._signature = null;
 	    }
 
 	    _createClass(IdCardManager, {
 	        initializeIdCard: {
 	            value: function initializeIdCard() {
-	                if (typeof document !== "undefined") {
-	                    if (!document.getElementById("pluginLocation")) {
-	                        var node = document.createElement("div");
-	                        node.setAttribute("id", "pluginLocation");
-	                        document.body.appendChild(node);
+	                return new Promise(function (resolve, reject) {
+	                    if (window.hwcrypto.use("auto")) {
+	                        resolve();
+	                    } else {
+	                        reject("Backend selection failed");
 	                    }
-	                }
-
-	                try {
-	                    loadSigningPlugin(this.language.toLowerCase());
-
-	                    this._pluginHandler = new IdCardPluginHandler(this.language.toLowerCase());
-
-	                    this._pluginHandler.getVersion(this._storeVersion.bind(this), this.onError);
-	                } catch (e) {
-	                    this.onError(e);
-	                }
+	                });
 	            }
 	        },
 	        getCertificate: {
 	            value: function getCertificate() {
-	                this._pluginHandler.getCertificate(this._storeCertificate.bind(this), this.onError);
+	                var _this = this;
+
+	                return new Promise(function (resolve, reject) {
+	                    var lParam = { lang: _this.language };
+
+	                    window.hwcrypto.getCertificate(lParam).then(function (rCert) {
+	                        _this._cert = rCert;
+	                        resolve();
+	                    }, function (err) {
+	                        reject(err);
+	                    });
+	                });
 	            }
 	        },
 	        signHexData: {
 	            value: function signHexData(hexData) {
-	                this._pluginHandler.sign(this._cert.id, hexData, this._onSigned.bind(this), this.onError);
+	                var _this = this;
+
+	                return new Promise(function (resolve, reject) {
+	                    var lParam = { lang: _this.language };
+
+	                    window.hwcrypto.sign(_this._cert, { type: "SHA-256", hex: hexData }, lParam).then(function (response) {
+	                        _this._signature = response;
+	                        resolve();
+	                    }, function (err) {
+	                        reject(err);
+	                    });
+	                });
 	            }
 	        },
 	        prepareSignatureData: {
 
-	            /* Getters/ setters */
+	            /* Sig data */
 
 	            get: function () {
 	                return {
-	                    tokenId: this._cert.id,
-	                    certData: this._cert.cert
+	                    tokenId: null,
+	                    certData: this._cert.hex
 	                };
 	            }
 	        },
 	        finalizeSignatureData: {
 	            get: function () {
 	                return {
-	                    tokenId: this._cert.id,
-	                    signature: this._signature
+	                    tokenId: null,
+	                    signature: this._signature.hex
 	                };
 	            }
 	        },
-	        version: {
-	            get: function () {
-	                return [this._version, this._libaryVersion];
-	            }
-	        },
 	        language: {
+
+	            /* Language */
+
 	            get: function () {
 	                return this._language;
 	            },
@@ -362,55 +372,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 	        },
-	        _storeVersion: {
+	        getError: {
 
-	            /* internal event handlers */
+	            /* Errors */
 
-	            value: function _storeVersion(version) {
-	                this._version = version;
-
-	                this.onReady();
-	            }
-	        },
-	        _storeCertificate: {
-	            value: function _storeCertificate(cert) {
-	                this._cert = cert;
-
-	                this.onStoreCertificate();
-	            }
-	        },
-	        _onSigned: {
-	            value: function _onSigned(signature) {
-	                this._signature = signature;
-
-	                this.onSigned();
-	            }
-	        },
-	        onReady: {
-
-	            /* Event handlers */
-
-	            value: function onReady() {
-	                console.log("onReady, version: ", this.version);
-	            }
-	        },
-	        onStoreCertificate: {
-	            value: function onStoreCertificate() {
-	                console.log("CERT ID", this._cert.id);
-	                console.log("CERT HEX", this._cert.cert);
-	            }
-	        },
-	        onSigned: {
-	            value: function onSigned() {
-	                console.log("SIGNATURE", this._signature);
-	            }
-	        },
-	        onError: {
-	            value: function onError(ex) {
-	                if (ex instanceof IdCardException) {
-	                    console.error("[Error code: " + ex.returnCode + "; Error: " + ex.message + "]");
+	            value: function getError(err) {
+	                if (typeof errorMessages[err] !== "undefined") {
+	                    return { error_code: err, message: errorMessages[err][this.language] };
 	                } else {
-	                    console.error(ex.message !== undefined ? ex.message : ex);
+	                    return { error_code: "technical_error", message: errorMessages.technical_error[this.language] };
 	                }
 	            }
 	        }
@@ -423,6 +393,29 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	exports.makeDict = makeDict;
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	function makeDict(list) {
+	    var res = {};
+
+	    list.forEach(function (item) {
+	        res[item[0]] = item[1];
+	    });
+
+	    return res;
+	}
+
+	;
+
+/***/ },
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/**
@@ -12229,18 +12222,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}.call(this));
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)(module), (function() { return this; }())))
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * Module dependencies.
 	 */
 
-	var Emitter = __webpack_require__(7);
-	var reduce = __webpack_require__(8);
+	var Emitter = __webpack_require__(8);
+	var reduce = __webpack_require__(9);
 
 	/**
 	 * Root reference for iframes.
@@ -13349,7 +13342,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = function(module) {
@@ -13365,7 +13358,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -13535,7 +13528,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	

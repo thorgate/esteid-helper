@@ -1,3 +1,6 @@
+import {makeDict} from "./utils";
+
+
 export const LANGUAGE_ET = 'EST';
 export const LANGUAGE_EN = 'ENG';
 export const LANGUAGE_RU = 'RUS';
@@ -10,83 +13,117 @@ const LANGUAGES = [
     LANGUAGE_LT
 ];
 
+let errorMessages = {
+    user_cancel: makeDict([
+        [LANGUAGE_ET, 'Allkirjastamine katkestati'],
+        [LANGUAGE_EN, 'Signing was cancelled'],
+        [LANGUAGE_LT, 'Pasirašymas nutrauktas'],
+        [LANGUAGE_RU, 'Подпись была отменена']
+    ]),
+
+    no_certificates: makeDict([
+        [LANGUAGE_ET, 'Sertifikaate ei leitud'],
+        [LANGUAGE_EN, 'Certificate not found'],
+        [LANGUAGE_LT, 'Nerastas sertifikatas'],
+        [LANGUAGE_RU, 'Сертификат не найден']
+    ]),
+
+    invalid_argument: makeDict([
+        [LANGUAGE_ET, 'Vigane sertifikaadi identifikaator'],
+        [LANGUAGE_EN, 'Invalid certificate identifier'],
+        [LANGUAGE_LT, 'Neteisingas sertifikato identifikatorius'],
+        [LANGUAGE_RU, 'Неверный идентификатор сертификата']
+    ]),
+
+    no_implementation: makeDict([
+        [LANGUAGE_ET, 'Vajalik tarkvara on puudu'],
+        [LANGUAGE_EN, 'Unable to find software'],
+        [LANGUAGE_LT, 'Nerasta programinės įranga'],
+        [LANGUAGE_RU, 'Отсутствует необходимое программное обеспечение']
+    ]),
+
+    technical_error: makeDict([
+        [LANGUAGE_ET, 'Tehniline viga'],
+        [LANGUAGE_EN, 'Technical error'],
+        [LANGUAGE_LT, 'Techninė klaida'],
+        [LANGUAGE_RU, 'Техническая ошибка']
+    ]),
+
+    not_allowed: makeDict([
+        [LANGUAGE_ET, 'Veebis allkirjastamise käivitamine on võimalik vaid https aadressilt'],
+        [LANGUAGE_EN, 'Web signing is allowed only from https:// URL'],
+        [LANGUAGE_LT, 'Web signing is allowed only from https:// URL'],
+        [LANGUAGE_RU, 'Подпись в интернете возможна только с URL-ов, начинающихся с https://']
+    ]),
+};
+
 
 class IdCardManager {
-    constructor(language, onReady, onStoreCertificate, onSigned, onError) {
-        if (onReady) {
-            this.onReady = onReady;
-        }
-
-        if (onError) {
-            this.onError = onError;
-        }
-
-        if (onStoreCertificate) {
-            this.onStoreCertificate = onStoreCertificate;
-        }
-
-        if (onSigned) {
-            this.onSigned = onSigned;
-        }
-
+    constructor(language) {
         this.language = language || LANGUAGE_ET;
 
-        this._version = null;
-        this._libaryVersion = libraryVersion;
-
-        this._pluginHandler = null;
         this._cert = null;
-        this._signature = null;
     }
 
     initializeIdCard() {
-        if (typeof document !== 'undefined') {
-            if (!document.getElementById('pluginLocation')) {
-                let node = document.createElement('div');
-                node.setAttribute('id', 'pluginLocation');
-                document.body.appendChild(node);
+        return new Promise(function (resolve, reject) {
+            if (window.hwcrypto.use("auto")) {
+                resolve();
             }
-        }
 
-        try {
-            loadSigningPlugin(this.language.toLowerCase());
-
-            this._pluginHandler = new IdCardPluginHandler(this.language.toLowerCase());
-
-            this._pluginHandler.getVersion(this._storeVersion.bind(this), this.onError);
-
-        } catch (e) {
-            this.onError(e);
-        }
+            else {
+                reject("Backend selection failed");
+            }
+        });
     }
 
     getCertificate() {
-        this._pluginHandler.getCertificate(this._storeCertificate.bind(this), this.onError);
+        return new Promise((resolve, reject) => {
+            let lParam = {lang: this.language};
+
+            window.hwcrypto.getCertificate(lParam).then((rCert) => {
+                this._cert = rCert;
+                resolve();
+            },
+
+            (err) => {
+                reject(err);
+            });
+        });
     }
 
     signHexData(hexData) {
-        this._pluginHandler.sign(this._cert.id, hexData, this._onSigned.bind(this), this.onError);
+        return new Promise((resolve, reject) => {
+            let lParam = {lang: this.language};
+
+            window.hwcrypto.sign(this._cert, {type: 'SHA-256', hex: hexData}, lParam)
+                .then((response) => {
+                    this._signature = response;
+                    resolve();
+
+                }, (err) => {
+                    reject(err);
+                });
+        });
     }
 
-    /* Getters/ setters */
+    /* Sig data */
 
     get prepareSignatureData() {
         return {
-            tokenId: this._cert.id,
-            certData: this._cert.cert
+            tokenId: null,
+            certData: this._cert.hex
         };
     }
 
     get finalizeSignatureData() {
         return {
-            tokenId: this._cert.id,
-            signature: this._signature
+            tokenId: null,
+            signature: this._signature.hex
         };
     }
 
-    get version() {
-        return [this._version, this._libaryVersion];
-    }
+    /* Language */
 
     get language() {
         return this._language;
@@ -98,46 +135,14 @@ class IdCardManager {
         }
     }
 
-    /* internal event handlers */
+    /* Errors */
+    getError(err) {
+        if (typeof errorMessages[err] !== "undefined") {
+            return {error_code: err, message: errorMessages[err][this.language]};
+        }
 
-    _storeVersion(version) {
-        this._version = version;
-
-        this.onReady();
-    }
-
-    _storeCertificate(cert) {
-        this._cert = cert;
-
-        this.onStoreCertificate();
-    }
-
-    _onSigned(signature) {
-        this._signature = signature;
-
-        this.onSigned();
-    }
-
-    /* Event handlers */
-
-    onReady() {
-        console.log('onReady, version: ', this.version);
-    }
-
-    onStoreCertificate() {
-        console.log('CERT ID', this._cert.id);
-        console.log('CERT HEX', this._cert.cert);
-    }
-
-    onSigned() {
-        console.log('SIGNATURE', this._signature);
-    }
-
-    onError(ex) {
-        if (ex instanceof IdCardException) {
-            console.error('[Error code: ' + ex.returnCode + '; Error: ' + ex.message + ']');
-        } else {
-            console.error(ex.message !== undefined ? ex.message : ex);
+        else {
+            return {error_code: 'technical_error', message: errorMessages.technical_error[this.language]};
         }
     }
 }

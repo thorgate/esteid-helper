@@ -12,8 +12,10 @@ module.exports = {
     },
 
     module: {
-        loaders: [
-            { test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader'}
-        ]
+        rules: [{
+            test: /\.js$/, // Transform all .js files required somewhere with Babel
+            exclude: /node_modules/,
+            use: 'babel-loader',
+        }]
     }
 };

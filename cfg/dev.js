@@ -6,7 +6,7 @@ var base = require('./base.js');
 
 
 var cfg = _.extend(base, {
-    debug: true,
+    mode: 'development',
 
     plugins: [
         new webpack.DefinePlugin({

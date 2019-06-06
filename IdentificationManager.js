@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import request from 'superagent';
 
 import IdCardManager from './IdCardManager';
@@ -6,7 +5,7 @@ import IdCardManager from './IdCardManager';
 
 class IdentificationManager {
     constructor(kwargs) {
-        kwargs = _.extend({
+        const data = {
             language: null,
 
             idEndpoints: {
@@ -19,15 +18,15 @@ class IdentificationManager {
                 start: null,
                 status: null,
                 finalize: null
-            }
-
-        }, kwargs);
+            },
+            ...kwargs
+        };
 
         // construct the idCardManager
-        this.idCardManager = new IdCardManager(kwargs.language);
+        this.idCardManager = new IdCardManager(data.language);
 
-        this.idEndpoints = kwargs.idEndpoints;
-        this.midEndpoints = kwargs.midEndpoints;
+        this.idEndpoints = data.idEndpoints;
+        this.midEndpoints = data.midEndpoints;
     }
 
     sign(signType, extraData, callBack) {

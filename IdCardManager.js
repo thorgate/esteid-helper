@@ -1,6 +1,3 @@
-import {makeDict} from "./utils";
-
-
 export const LANGUAGE_ET = 'EST';
 export const LANGUAGE_EN = 'ENG';
 export const LANGUAGE_RU = 'RUS';
@@ -14,47 +11,47 @@ const LANGUAGES = [
 ];
 
 let errorMessages = {
-    user_cancel: makeDict([
-        [LANGUAGE_ET, 'Allkirjastamine katkestati'],
-        [LANGUAGE_EN, 'Signing was cancelled'],
-        [LANGUAGE_LT, 'Pasirašymas nutrauktas'],
-        [LANGUAGE_RU, 'Подпись была отменена']
-    ]),
+    user_cancel: {
+        [LANGUAGE_ET]: 'Allkirjastamine katkestati',
+        [LANGUAGE_EN]: 'Signing was cancelled',
+        [LANGUAGE_LT]: 'Pasirašymas nutrauktas',
+        [LANGUAGE_RU]: 'Подпись была отменена'
+    },
 
-    no_certificates: makeDict([
-        [LANGUAGE_ET, 'Sertifikaate ei leitud'],
-        [LANGUAGE_EN, 'Certificate not found'],
-        [LANGUAGE_LT, 'Nerastas sertifikatas'],
-        [LANGUAGE_RU, 'Сертификат не найден']
-    ]),
+    no_certificates: {
+        [LANGUAGE_ET]: 'Sertifikaate ei leitud',
+        [LANGUAGE_EN]: 'Certificate not found',
+        [LANGUAGE_LT]: 'Nerastas sertifikatas',
+        [LANGUAGE_RU]: 'Сертификат не найден'
+    },
 
-    invalid_argument: makeDict([
-        [LANGUAGE_ET, 'Vigane sertifikaadi identifikaator'],
-        [LANGUAGE_EN, 'Invalid certificate identifier'],
-        [LANGUAGE_LT, 'Neteisingas sertifikato identifikatorius'],
-        [LANGUAGE_RU, 'Неверный идентификатор сертификата']
-    ]),
+    invalid_argument: {
+        [LANGUAGE_ET]: 'Vigane sertifikaadi identifikaator',
+        [LANGUAGE_EN]: 'Invalid certificate identifier',
+        [LANGUAGE_LT]: 'Neteisingas sertifikato identifikatorius',
+        [LANGUAGE_RU]: 'Неверный идентификатор сертификата',
+    },
 
-    no_implementation: makeDict([
-        [LANGUAGE_ET, 'Vajalik tarkvara on puudu'],
-        [LANGUAGE_EN, 'Unable to find software'],
-        [LANGUAGE_LT, 'Nerasta programinės įranga'],
-        [LANGUAGE_RU, 'Отсутствует необходимое программное обеспечение']
-    ]),
+    no_implementation: {
+        [LANGUAGE_ET]: 'Vajalik tarkvara on puudu',
+        [LANGUAGE_EN]: 'Unable to find software',
+        [LANGUAGE_LT]: 'Nerasta programinės įranga',
+        [LANGUAGE_RU]: 'Отсутствует необходимое программное обеспечение'
+    },
 
-    technical_error: makeDict([
-        [LANGUAGE_ET, 'Tehniline viga'],
-        [LANGUAGE_EN, 'Technical error'],
-        [LANGUAGE_LT, 'Techninė klaida'],
-        [LANGUAGE_RU, 'Техническая ошибка']
-    ]),
+    technical_error: {
+        [LANGUAGE_ET]: 'Tehniline viga',
+        [LANGUAGE_EN]: 'Technical error',
+        [LANGUAGE_LT]: 'Techninė klaida',
+        [LANGUAGE_RU]: 'Техническая ошибка'
+    },
 
-    not_allowed: makeDict([
-        [LANGUAGE_ET, 'Veebis allkirjastamise käivitamine on võimalik vaid https aadressilt'],
-        [LANGUAGE_EN, 'Web signing is allowed only from https:// URL'],
-        [LANGUAGE_LT, 'Web signing is allowed only from https:// URL'],
-        [LANGUAGE_RU, 'Подпись в интернете возможна только с URL-ов, начинающихся с https://']
-    ]),
+    not_allowed: {
+        [LANGUAGE_ET]: 'Veebis allkirjastamise käivitamine on võimalik vaid https aadressilt',
+        [LANGUAGE_EN]: 'Web signing is allowed only from https:// URL',
+        [LANGUAGE_LT]: 'Web signing is allowed only from https:// URL',
+        [LANGUAGE_RU]: 'Подпись в интернете возможна только с URL-ов, начинающихся с https://'
+    },
 };
 
 

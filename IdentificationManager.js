@@ -19,6 +19,13 @@ class IdentificationManager {
                 status: null,
                 finalize: null
             },
+
+            smartidEndpoints: {
+                start: null,
+                status: null,
+                finalize: null
+            },
+
             ...kwargs
         };
 
@@ -27,22 +34,75 @@ class IdentificationManager {
 
         this.idEndpoints = data.idEndpoints;
         this.midEndpoints = data.midEndpoints;
+        this.smartidEndpoints = data.smartidEndpoints;
     }
 
-    sign(signType, extraData, callBack) {
+    checkStatus(endpoint, extraData, resolve, reject) {
+        const doRequest = () => {
+            request
+                .post(endpoint)
+                .type('form')
+                .send(extraData)
+                .end((err, res) => {
+                    if (res.ok) {
+                        if (!res.body.success) {
+                            if (res.body.pending) {
+                                // Still pending, try again in 1s
+                                setTimeout(() => doRequest(), 1000);
+                            } else {
+                                // Got a failure, lets notify the requester
+                                reject(res.body);
+                            }
+                        } else {
+                            // Process complete
+                            resolve(res.body);
+                        }
+
+                    } else {
+                        // Got a failure, lets notify the requester
+                        reject(res.body);
+                    }
+                });
+        };
+        return doRequest;
+    };
+
+    signWithIdCard(extraData) {
         return new Promise((resolve, reject) => {
-            if (signType === IdentificationManager.SIGN_ID) {
-                this.__signHandleId(extraData, resolve, reject);
-            }
+            this.__signHandleId(extraData, resolve, reject);
+        })
+    }
 
-            else if (signType === IdentificationManager.SIGN_MOBILE) {
-                this.__signHandleMid(extraData, resolve, reject);
-            }
+    signWithMobileId(extraData) {
+        return new Promise((resolve, reject) => {
+            this.__signHandleMid(extraData, resolve, reject);
+        })
+    }
 
-            else {
-                reject('IdentificationManager: Bad signType');
-            }
-        });
+    signWithSmartId(extraData) {
+        return new Promise((resolve, reject) => {
+            this.__signHandleSmartid(extraData, resolve, reject);
+        })
+    }
+
+
+    sign(signType, extraData) {
+        // Legacy API
+        if (signType === IdentificationManager.SIGN_ID) {
+            return this.signWithIdCard(extraData);
+        }
+
+        else if (signType === IdentificationManager.SIGN_MOBILE) {
+            return this.signWithMobileId(extraData);
+        }
+
+        else if (signType === IdentificationManager.SIGN_SMARTID) {
+            return this.signWithSmartId(extraData);
+        }
+
+        else {
+            throw new TypeError('IdentificationManager: Bad signType');
+        }
     }
 
     __signHandleId(extraData, resolve, reject) {
@@ -110,42 +170,32 @@ class IdentificationManager {
     midStatus(challengeId, extraData) {
         return new Promise((resolve, reject) => {
             if (challengeId) {
-                var doRequest = () => {
-                    request
-                        .post(this.midEndpoints.status)
-                        .type('form')
-                        .send(extraData)
-                        .end((err, res) => {
-                            if (res.ok) {
-                                if (!res.body.success) {
-                                    if (res.body.pending) {
-                                        // Still pending, try again in 1s
-                                        setTimeout(doRequest, 1000);
-                                    }
-
-                                    else {
-                                        // Got a failure, lets notify the requester
-                                        reject(res.body);
-                                    }
-                                }
-
-                                else {
-                                    // Process complete
-                                    resolve(res.body);
-                                }
-
-                            } else {
-                                // Got a failure, lets notify the requester
-                                reject(res.body);
-                            }
-                        });
-                };
-
-                doRequest();
-
+                const checkStatus = this.checkStatus(this.midEndpoints.status, extraData, resolve, reject);
+                checkStatus();
             } else {
                 reject("skipped");
             }
+        });
+    }
+
+    __signHandleSmartid(extraData, resolve, reject) {
+        request
+            .post(this.smartidEndpoints.start)
+            .type('form')
+            .send(extraData)
+            .end(function (err, res) {
+                if (res.ok && res.body.success) {
+                    resolve(res.body);
+                } else {
+                    reject(res.body);
+                }
+            });
+    }
+
+    smartidStatus(extraData) {
+        return new Promise((resolve, reject) => {
+            const checkStatus = this.checkStatus(this.smartidEndpoints.status, extraData, resolve, reject);
+            checkStatus();
         });
     }
 
@@ -156,6 +206,7 @@ class IdentificationManager {
 
 IdentificationManager.SIGN_ID = 'id';
 IdentificationManager.SIGN_MOBILE = 'mid';
+IdentificationManager.SIGN_SMARTID = 'smartid';
 
 
 export default IdentificationManager;

@@ -8,6 +8,7 @@ module.exports = {
         path: path.join(__dirname, '..', "dist"),
         filename: "Esteid.[name].js",
         library: ["Esteid"],
+        libraryExport: 'default',
         libraryTarget: "umd"
     },
 

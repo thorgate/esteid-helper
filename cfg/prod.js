@@ -1,10 +1,9 @@
-var _ = require('lodash');
 var webpack = require("webpack");
 
 var base = require('./base.js');
 
 
-module.exports = _.extend(base, {
+module.exports = Object.assign(base, {
     mode: 'production',
     plugins: [
         new webpack.DefinePlugin({

@@ -1,11 +1,10 @@
-var _ = require('lodash');
 var path = require("path");
 var webpack = require("webpack");
 
 var base = require('./base.js');
 
 
-var cfg = _.extend(base, {
+var cfg = Object.assign(base, {
     mode: 'development',
 
     plugins: [

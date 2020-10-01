@@ -107,17 +107,15 @@ class IdentificationManager {
 
     __signHandleId(extraData, resolve, reject) {
         this.idCardManager.initializeIdCard().then(() => {
-            this.idCardManager.getCertificate().then(() => {
-                let prepareData = this.idCardManager.prepareSignatureData;
-
+            this.idCardManager.getCertificate().then((certificate) => {
                 request
                     .post(this.idEndpoints.start)
                     .type('form')
-                    .send({certificate: prepareData.certData, token_id: prepareData.tokenId})
+                    .send({certificate: certificate})
                     .send(extraData)
                     .end((err, res) => {
                         if (res.ok && res.body.success) {
-                            this.__attemptSign(res.body.id, res.body.digest, extraData, resolve, reject);
+                            this.__doSign(res.body.digest, extraData, resolve, reject);
                         }
 
                         else {
@@ -130,13 +128,12 @@ class IdentificationManager {
         }, reject);
     }
 
-    __attemptSign(signatureId, signatureDigest, extraData, resolve, reject) {
-        this.idCardManager.signHexData(signatureDigest).then(() => {
-            let finalizeData = this.idCardManager.finalizeSignatureData;
+    __doSign(dataDigest, extraData, resolve, reject) {
+        this.idCardManager.signHexData(dataDigest).then((signature) => {
             request
                 .post(this.idEndpoints.finish)
                 .type('form')
-                .send({signature_value: finalizeData.signature, signature_id: signatureId})
+                .send({signature_value: signature})
                 .send(extraData)
                 .end((err, res) => {
                     if (res.ok && res.body.success) {

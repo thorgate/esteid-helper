@@ -5,7 +5,7 @@ export const LANGUAGE_LT = "LIT";
 
 const LANGUAGES = [LANGUAGE_ET, LANGUAGE_EN, LANGUAGE_RU, LANGUAGE_LT];
 
-let errorMessages = {
+const errorMessages = {
     user_cancel: {
         [LANGUAGE_ET]: "Allkirjastamine katkestati",
         [LANGUAGE_EN]: "Signing was cancelled",
@@ -87,7 +87,7 @@ class IdCardManager {
      */
     getCertificate() {
         return new Promise((resolve, reject) => {
-            let lParam = { lang: this.language };
+            const lParam = { lang: this.language };
 
             window.hwcrypto.getCertificate(lParam).then(
                 (rCert) => {
@@ -121,7 +121,7 @@ class IdCardManager {
      */
     signHexData(hexData) {
         return new Promise((resolve, reject) => {
-            let lParam = { lang: this.language };
+            const lParam = { lang: this.language };
 
             window.hwcrypto
                 .sign(

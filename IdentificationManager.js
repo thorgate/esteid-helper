@@ -1,16 +1,26 @@
 import IdCardManager from './IdCardManager'
 
-function postForm(url, data) {
+async function postForm(url, data) {
     const formData = Object.entries(data).map(
         ([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
     ).join('&')
-    return fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData
-    })
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData
+        })
+        const data = await response.json()
+        return {
+            data,
+            ok: response.ok,
+        }
+    } catch (err) {
+        console.log(err)
+        return {}
+    }
 }
 
 
@@ -51,20 +61,14 @@ class IdentificationManager {
     checkStatus(endpoint, extraData, resolve, reject) {
         const doRequest = () => {
             postForm(endpoint, extraData)
-                .then((res) => {
-                    res.json().then((data) => {
-                        if (res.ok && data.pending) {
-                            setTimeout(() => doRequest(), 1000)
-                        } else if (res.ok && data.success) {
-                            resolve(data)
-                        } else {
-                            reject(data)
-                        }
-                    }).catch((err) => {
-                        // Not valid json
-                        console.log(err)
-                        reject()
-                    })
+                .then(({ok, data}) => {
+                    if (ok && data.pending) {
+                        setTimeout(() => doRequest(), 1000)
+                    } else if (ok && data.success) {
+                        resolve(data)
+                    } else {
+                        reject(data)
+                    }
                 })
         }
         return doRequest
@@ -109,18 +113,12 @@ class IdentificationManager {
                     ...extraData,
                     certificate: certificate
                 })
-                    .then((res) => {
-                        res.json().then(data => {
-                            if (res.ok && data.success) {
-                                this.__doSign(data.digest, extraData, resolve, reject)
-                            } else {
-                                reject(data)
-                            }
-                        }).catch((err) => {
-                            // Not valid json
-                            console.log(err)
-                            reject()
-                        })
+                    .then(({ok, data}) => {
+                        if (ok && data.success) {
+                            this.__doSign(data.digest, extraData, resolve, reject)
+                        } else {
+                            reject(data)
+                        }
                     })
 
             }, reject)
@@ -134,36 +132,24 @@ class IdentificationManager {
                 ...extraData,
                 signature_value: signature
             })
-                .then((res) => {
-                    res.json().then(data => {
-                        if (res.ok && data.success) {
-                            resolve(data)
-                        } else {
-                            reject(data)
-                        }
-                    }).catch((err) => {
-                        // Not valid json
-                        console.log(err)
-                        reject()
-                    })
+                .then(({ok, data}) => {
+                    if (ok && data.success) {
+                        resolve(data)
+                    } else {
+                        reject(data)
+                    }
                 })
         }, reject)
     }
 
     __signHandleMid(extraData, resolve, reject) {
         postForm(this.midEndpoints.start, extraData)
-            .then((res) => {
-                res.json().then(data => {
-                    if (res.ok && data.success) {
-                        resolve(data)
-                    } else {
-                        reject(data)
-                    }
-                }).catch((err) => {
-                    // Not valid json
-                    console.log(err)
-                    reject()
-                })
+            .then(({ok, data}) => {
+                if (ok && data.success) {
+                    resolve(data)
+                } else {
+                    reject(data)
+                }
             })
     }
 
@@ -180,18 +166,12 @@ class IdentificationManager {
 
     __signHandleSmartid(extraData, resolve, reject) {
         postForm(this.smartidEndpoints.start, extraData)
-            .then((res) => {
-                res.json().then(data => {
-                    if (res.ok && data.success) {
-                        resolve(data)
-                    } else {
-                        reject(data)
-                    }
-                }).catch((err) => {
-                    // Not valid json
-                    console.log(err)
-                    reject()
-                })
+            .then(({ok, data}) => {
+                if (ok && data.success) {
+                    resolve(data)
+                } else {
+                    reject(data)
+                }
             })
     }
 

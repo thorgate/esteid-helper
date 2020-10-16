@@ -21,9 +21,7 @@
     "webpack": "^4.33.0",
     "webpack-cli": "^3.3.2"
   },
-  "dependencies": {
-    "superagent": "^1.1.0"
-  },
+  "dependencies": {},
   "private": true,
   "license": "BSD"
 }

@@ -7,6 +7,7 @@ async function request(url, data, method = "POST") {
             headers: {
                 "Content-Type": "application/json",
             },
+            // we don't make use of GET currently, but let's add a check for that
             body: method === "GET" ? null : JSON.stringify(data || {}),
         })
 
@@ -45,7 +46,7 @@ class IdentificationManager {
     checkStatus(endpoint, resolve, reject) {
         console.log("Status", endpoint)
         const doRequest = () => {
-            request(endpoint, null, "GET")
+            request(endpoint, null, "PATCH")
                 .then(({ ok, data }) => {
                     if (ok && data.pending) {
                         setTimeout(() => doRequest(), 1000)

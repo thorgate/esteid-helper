@@ -1,21 +1,29 @@
-import IdCardManager from './IdCardManager'
+import IdCardManager from "./IdCardManager"
 
-async function postForm(url, data) {
-    const formData = Object.entries(data).map(
-        ([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
-    ).join('&')
+async function request(url, data, method = "POST") {
     try {
         const response = await fetch(url, {
-            method: 'POST',
+            method: method,
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                "Content-Type": "application/json",
             },
-            body: formData
+            // we don't make use of GET currently, but let's add a check for that
+            body: method === "GET" ? null : JSON.stringify(data || {}),
         })
-        const data = await response.json()
-        return {
-            data,
-            ok: response.ok,
+
+        const body = await response.text()
+
+        try {
+            const data = JSON.parse(body)
+            data.success = data.status === "success"
+            data.pending = `${response.status}` === "202"
+            return {
+                data,
+                ok: response.ok,
+            }
+        } catch (err) {
+            console.log("Failed to parse response as JSON", body)
+            return {}
         }
     } catch (err) {
         console.log(err)
@@ -23,45 +31,23 @@ async function postForm(url, data) {
     }
 }
 
-
 class IdentificationManager {
-    constructor(kwargs) {
-        const data = {
-            language: null,
-
-            idEndpoints: {
-                start: null,
-                finish: null,
-                finalize: null
-            },
-
-            midEndpoints: {
-                start: null,
-                status: null,
-                finalize: null
-            },
-
-            smartidEndpoints: {
-                start: null,
-                status: null,
-                finalize: null
-            },
-
-            ...kwargs
-        }
-
+    constructor({ language, idUrl, mobileIdUrl, smartIdUrl, csrfToken }) {
         // construct the idCardManager
-        this.idCardManager = new IdCardManager(data.language)
+        this.idCardManager = new IdCardManager(language)
 
-        this.idEndpoints = data.idEndpoints
-        this.midEndpoints = data.midEndpoints
-        this.smartidEndpoints = data.smartidEndpoints
+        this.idUrl = idUrl
+        this.mobileIdUrl = mobileIdUrl
+        this.smartIdUrl = smartIdUrl
+        this.csrfToken = csrfToken
+        this.language = language
     }
 
-    checkStatus(endpoint, extraData, resolve, reject) {
+    checkStatus(endpoint, resolve, reject) {
+        console.log("Status", endpoint)
         const doRequest = () => {
-            postForm(endpoint, extraData)
-                .then(({ok, data}) => {
+            request(endpoint, null, "PATCH")
+                .then(({ ok, data }) => {
                     if (ok && data.pending) {
                         setTimeout(() => doRequest(), 1000)
                     } else if (ok && data.success) {
@@ -70,111 +56,105 @@ class IdentificationManager {
                         reject(data)
                     }
                 })
+                .catch((err) => {
+                    console.log("Status error", err)
+                })
         }
-        return doRequest
-    };
+        return doRequest()
+    }
 
-    signWithIdCard(extraData) {
+    signWithIdCard() {
         return new Promise((resolve, reject) => {
-            this.__signHandleId(extraData, resolve, reject)
+            this.__signHandleIdCard(resolve, reject)
         })
     }
 
-    signWithMobileId(extraData) {
+    signWithMobileId({ idCode, phoneNumber }) {
         return new Promise((resolve, reject) => {
-            this.__signHandleMid(extraData, resolve, reject)
+            this.__signHandleMid(idCode, phoneNumber, resolve, reject)
         })
     }
 
-    signWithSmartId(extraData) {
+    signWithSmartId({ idCode }) {
         return new Promise((resolve, reject) => {
-            this.__signHandleSmartid(extraData, resolve, reject)
+            this.__signHandleSmartid(idCode, resolve, reject)
         })
     }
 
-
-    sign(signType, extraData) {
-        // Legacy API
-        if (signType === IdentificationManager.SIGN_ID) {
-            return this.signWithIdCard(extraData)
-        } else if (signType === IdentificationManager.SIGN_MOBILE) {
-            return this.signWithMobileId(extraData)
-        } else if (signType === IdentificationManager.SIGN_SMARTID) {
-            return this.signWithSmartId(extraData)
-        } else {
-            throw new TypeError('IdentificationManager: Bad signType')
-        }
-    }
-
-    __signHandleId(extraData, resolve, reject) {
+    __signHandleIdCard(resolve, reject) {
         this.idCardManager.initializeIdCard().then(() => {
             this.idCardManager.getCertificate().then((certificate) => {
-                postForm(this.idEndpoints.start, {
-                    ...extraData,
-                    certificate: certificate
-                })
-                    .then(({ok, data}) => {
-                        if (ok && data.success) {
-                            this.__doSign(data.digest, extraData, resolve, reject)
-                        } else {
-                            reject(data)
-                        }
-                    })
-
-            }, reject)
-
-        }, reject)
-    }
-
-    __doSign(dataDigest, extraData, resolve, reject) {
-        this.idCardManager.signHexData(dataDigest).then((signature) => {
-            postForm(this.idEndpoints.finish, {
-                ...extraData,
-                signature_value: signature
-            })
-                .then(({ok, data}) => {
+                request(this.idUrl, {
+                    csrfmiddlewaretoken: this.csrfToken,
+                    certificate: certificate,
+                }).then(({ ok, data }) => {
                     if (ok && data.success) {
-                        resolve(data)
+                        this.__doSign(data.digest, resolve, reject)
                     } else {
                         reject(data)
                     }
                 })
+            }, reject)
         }, reject)
     }
 
-    __signHandleMid(extraData, resolve, reject) {
-        postForm(this.midEndpoints.start, extraData)
-            .then(({ok, data}) => {
+    __doSign(dataDigest, resolve, reject) {
+        this.idCardManager.signHexData(dataDigest).then((signature) => {
+            request(
+                this.idUrl,
+                {
+                    csrfmiddlewaretoken: this.csrfToken,
+                    signature_value: signature,
+                },
+                "PATCH"
+            ).then(({ ok, data }) => {
                 if (ok && data.success) {
                     resolve(data)
                 } else {
                     reject(data)
                 }
             })
+        }, reject)
     }
 
-    midStatus(extraData) {
-        return new Promise((resolve, reject) => {
-            const checkStatus = this.checkStatus(this.midEndpoints.status, extraData, resolve, reject)
-            checkStatus()
+    __signHandleMid(idCode, phoneNumber, resolve, reject) {
+        request(this.mobileIdUrl, {
+            id_code: idCode,
+            phone_number: phoneNumber,
+            language: this.language,
+            csrfmiddlewaretoken: this.csrfToken,
+        }).then(({ ok, data }) => {
+            if (ok && data.success) {
+                resolve(data)
+            } else {
+                reject(data)
+            }
         })
     }
 
-    __signHandleSmartid(extraData, resolve, reject) {
-        postForm(this.smartidEndpoints.start, extraData)
-            .then(({ok, data}) => {
-                if (ok && data.success) {
-                    resolve(data)
-                } else {
-                    reject(data)
-                }
-            })
+    midStatus() {
+        return new Promise((resolve, reject) => {
+            this.checkStatus(this.mobileIdUrl, resolve, reject)
+        })
     }
 
-    smartidStatus(extraData) {
+    __signHandleSmartid(idCode, resolve, reject) {
+        request(this.smartIdUrl, {
+            id_code: idCode,
+            language: this.language,
+            csrfmiddlewaretoken: this.csrfToken,
+        }).then(({ ok, data }) => {
+            if (ok && data.success) {
+                resolve(data)
+            } else {
+                reject(data)
+            }
+        })
+    }
+
+    smartidStatus() {
         return new Promise((resolve, reject) => {
-            const checkStatus = this.checkStatus(this.smartidEndpoints.status, extraData, resolve, reject)
-            checkStatus()
+            this.checkStatus(this.smartIdUrl, resolve, reject)
         })
     }
 
@@ -182,10 +162,5 @@ class IdentificationManager {
         return this.idCardManager.getError(err)
     }
 }
-
-IdentificationManager.SIGN_ID = 'id'
-IdentificationManager.SIGN_MOBILE = 'mid'
-IdentificationManager.SIGN_SMARTID = 'smartid'
-
 
 export default IdentificationManager

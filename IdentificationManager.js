@@ -153,14 +153,10 @@ class IdentificationManager {
             })
     }
 
-    midStatus(challengeId, extraData) {
+    midStatus(extraData) {
         return new Promise((resolve, reject) => {
-            if (challengeId) {
-                const checkStatus = this.checkStatus(this.midEndpoints.status, extraData, resolve, reject)
-                checkStatus()
-            } else {
-                reject("skipped")
-            }
+            const checkStatus = this.checkStatus(this.midEndpoints.status, extraData, resolve, reject)
+            checkStatus()
         })
     }
 

@@ -32,7 +32,7 @@ async function request(url, data, method = "POST") {
 }
 
 class IdentificationManager {
-    constructor({ language, idUrl, mobileIdUrl, smartIdUrl, csrfToken }) {
+    constructor({ language, idUrl, mobileIdUrl, smartIdUrl, csrfToken, pollInterval }) {
         // construct the idCardManager
         this.idCardManager = new IdCardManager(language)
 
@@ -41,15 +41,17 @@ class IdentificationManager {
         this.smartIdUrl = smartIdUrl
         this.csrfToken = csrfToken
         this.language = language
+        this.pollInterval = pollInterval || 3000
     }
 
     checkStatus(endpoint, resolve, reject) {
+        const pollInterval = this.pollInterval
         console.log("Status", endpoint)
         const doRequest = () => {
             request(endpoint, null, "PATCH")
                 .then(({ ok, data }) => {
                     if (ok && data.pending) {
-                        setTimeout(() => doRequest(), 1000)
+                        setTimeout(() => doRequest(), pollInterval)
                     } else if (ok && data.success) {
                         resolve(data)
                     } else {
@@ -75,9 +77,9 @@ class IdentificationManager {
         })
     }
 
-    signWithSmartId({ idCode }) {
+    signWithSmartId({ idCode, country }) {
         return new Promise((resolve, reject) => {
-            this.__signHandleSmartid(idCode, resolve, reject)
+            this.__signHandleSmartid(idCode, country, resolve, reject)
         })
     }
 
@@ -138,10 +140,10 @@ class IdentificationManager {
         })
     }
 
-    __signHandleSmartid(idCode, resolve, reject) {
+    __signHandleSmartid(idCode, country, resolve, reject) {
         request(this.smartIdUrl, {
             id_code: idCode,
-            language: this.language,
+            country,
             csrfmiddlewaretoken: this.csrfToken,
         }).then(({ ok, data }) => {
             if (ok && data.success) {

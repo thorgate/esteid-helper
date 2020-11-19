@@ -1,0 +1,30 @@
+{
+    "parserOptions": {
+        "ecmaVersion": 2018,
+        "sourceType": "module"
+    },
+    "extends": [
+        "prettier"
+    ],
+    "plugins": [
+        "import",
+        "prettier"
+    ],
+    "rules": {
+        "prettier/prettier": "error",
+
+        // We allow single named export as well
+        "import/prefer-default-export": 0,
+
+        // Set max line length to 140 chars. Prettier formats to 80.
+        // Using this rule so comments would be kept in more readable format
+        "max-len": ["warn", 120],
+
+        // Allow unary ++ operator in for loop afterthoughts
+        "no-plusplus": "off",
+
+        // Turn these into errors
+        "no-unused-vars": ["error", { "argsIgnorePattern": "_[0-9]*", "varsIgnorePattern": "_[0-9]*" }],
+        "no-var": "error"
+    }
+}

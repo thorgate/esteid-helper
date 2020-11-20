@@ -1,7 +1,6 @@
-import IdentificationManager from './IdentificationManager';
+import IdentificationManager from "./IdentificationManager";
 
-import {LANGUAGE_ET, LANGUAGE_EN, LANGUAGE_RU, LANGUAGE_LT} from './IdCardManager';
-
+import { LANGUAGE_ET, LANGUAGE_EN, LANGUAGE_RU, LANGUAGE_LT } from "./IdCardManager";
 
 export default {
     IdentificationManager: IdentificationManager,
@@ -10,6 +9,6 @@ export default {
         ET: LANGUAGE_ET,
         EN: LANGUAGE_EN,
         RU: LANGUAGE_RU,
-        LT: LANGUAGE_LT
-    }
+        LT: LANGUAGE_LT,
+    },
 };

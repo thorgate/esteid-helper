@@ -8,7 +8,7 @@ IdentificationManager({
     mobileIdUrl: "the url that is used for MobileID signing",
     smartIdUrl: "the url that is used for SmartID signing",
     language: "A language supported by *ID, one of ENG, EST, LIT, RUS",
-    csrfToken: "the Django csrf token to add to POST requests",
+    csrfToken: "the Django csrf token to add to POST/PATCH requests",
 })
 ```
 
@@ -18,7 +18,8 @@ IdentificationManager({
 - MobileID: `manager.signWithMobileId({idCode, phoneNumber}).then(() => {})`;
 - SmartID: `manager.signWithSmartId({idCode}).then(() => {})`.
 
-The methods accept an object with required data and the `csrfMiddlewareToken` for POST requests to succeed, and return a Promise.
+The methods accept an object with required data and the `csrfMiddlewareToken` 
+for POST/PATCH requests to succeed, and return a Promise.
 
 The methods issue a signature preparation request to the backend with payload dependent on the signature provider.
 - ID card: `certificate`: hex-encoded signer certificate obtained from the ID card through the `hwcrypto.js` library;
@@ -31,7 +32,9 @@ The methods issue a signature preparation request to the backend with payload de
 - MobileID: `manager.midStatus()`
 - SmartID: `manager.smartidStatus()`
 
-The methods return a Promise.
+The methods return a Promise that resolves with a `data` object obtained from the final status response.
+The response is expected to contain a `status` property which will also be translated to a `success` property
+of the `data` object. Besides, it may any data that the backend and frontend agree upon.
 
 The methods issue a signature finalization request to the backend with payload dependent on the signature provider.
 - ID card: `signature_value`: hex-encoded signature obtained from the ID card through the `hwcrypto.js` library;

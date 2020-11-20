@@ -42,12 +42,10 @@ const errorMessages = {
     },
 
     not_allowed: {
-        [LANGUAGE_ET]:
-            "Veebis allkirjastamise käivitamine on võimalik vaid https aadressilt",
+        [LANGUAGE_ET]: "Veebis allkirjastamise käivitamine on võimalik vaid https aadressilt",
         [LANGUAGE_EN]: "Web signing is allowed only from https:// URL",
         [LANGUAGE_LT]: "Web signing is allowed only from https:// URL",
-        [LANGUAGE_RU]:
-            "Подпись в интернете возможна только с URL-ов, начинающихся с https://",
+        [LANGUAGE_RU]: "Подпись в интернете возможна только с URL-ов, начинающихся с https://",
     },
 };
 
@@ -96,7 +94,7 @@ class IdCardManager {
                 },
                 (err) => {
                     reject(err);
-                }
+                },
             );
         });
     }
@@ -123,20 +121,14 @@ class IdCardManager {
         return new Promise((resolve, reject) => {
             const lParam = { lang: this.language };
 
-            window.hwcrypto
-                .sign(
-                    this.certificate,
-                    { type: "SHA-256", hex: hexData },
-                    lParam
-                )
-                .then(
-                    (signature) => {
-                        resolve(signature.hex);
-                    },
-                    (err) => {
-                        reject(err);
-                    }
-                );
+            window.hwcrypto.sign(this.certificate, { type: "SHA-256", hex: hexData }, lParam).then(
+                (signature) => {
+                    resolve(signature.hex);
+                },
+                (err) => {
+                    reject(err);
+                },
+            );
         });
     }
 

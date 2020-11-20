@@ -1,86 +1,88 @@
-import IdCardManager from "./IdCardManager"
+import IdCardManager from "./IdCardManager";
 
-async function request(url, data, method = "POST") {
+const request = async (url, data, method = "POST") => {
+    const headers = {
+        "Content-Type": "application/json",
+    };
+    let body = null;
+    if (method !== "GET") {
+        // we don't make use of GET currently, but let's add a check for that
+        headers["X-CSRFToken"] = data.csrfmiddlewaretoken;
+        body = JSON.stringify(data || {});
+    }
     try {
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                "Content-Type": "application/json",
-            },
-            // we don't make use of GET currently, but let's add a check for that
-            body: method === "GET" ? null : JSON.stringify(data || {}),
-        })
+        const response = await fetch(url, { method, headers, body });
 
-        const body = await response.text()
+        const responseText = await response.text();
 
         try {
-            const data = JSON.parse(body)
-            data.success = data.status === "success"
-            data.pending = `${response.status}` === "202"
+            const data = JSON.parse(responseText);
+            data.success = data.status === "success";
+            data.pending = `${response.status}` === "202";
             return {
                 data,
                 ok: response.ok,
-            }
+            };
         } catch (err) {
-            console.log("Failed to parse response as JSON", body)
-            return {}
+            console.log("Failed to parse response as JSON", responseText);
+            return {};
         }
     } catch (err) {
-        console.log(err)
-        return {}
+        console.log(err);
+        return {};
     }
-}
+};
 
 class IdentificationManager {
     constructor({ language, idUrl, mobileIdUrl, smartIdUrl, csrfToken, pollInterval }) {
         // construct the idCardManager
-        this.idCardManager = new IdCardManager(language)
+        this.idCardManager = new IdCardManager(language);
 
-        this.idUrl = idUrl
-        this.mobileIdUrl = mobileIdUrl
-        this.smartIdUrl = smartIdUrl
-        this.csrfToken = csrfToken
-        this.language = language
-        this.pollInterval = pollInterval || 3000
+        this.idUrl = idUrl;
+        this.mobileIdUrl = mobileIdUrl;
+        this.smartIdUrl = smartIdUrl;
+        this.csrfToken = csrfToken;
+        this.language = language;
+        this.pollInterval = pollInterval || 3000;
     }
 
     checkStatus(endpoint, resolve, reject) {
-        const pollInterval = this.pollInterval
-        console.log("Status", endpoint)
+        const pollInterval = this.pollInterval;
+        const csrfmiddlewaretoken = this.csrfToken;
         const doRequest = () => {
-            request(endpoint, null, "PATCH")
+            request(endpoint, { csrfmiddlewaretoken }, "PATCH")
                 .then(({ ok, data }) => {
                     if (ok && data.pending) {
-                        setTimeout(() => doRequest(), pollInterval)
+                        setTimeout(() => doRequest(), pollInterval);
                     } else if (ok && data.success) {
-                        resolve(data)
+                        resolve(data);
                     } else {
-                        reject(data)
+                        reject(data);
                     }
                 })
                 .catch((err) => {
-                    console.log("Status error", err)
-                })
-        }
-        return doRequest()
+                    console.log("Status error", err);
+                });
+        };
+        return doRequest();
     }
 
     signWithIdCard() {
         return new Promise((resolve, reject) => {
-            this.__signHandleIdCard(resolve, reject)
-        })
+            this.__signHandleIdCard(resolve, reject);
+        });
     }
 
     signWithMobileId({ idCode, phoneNumber }) {
         return new Promise((resolve, reject) => {
-            this.__signHandleMid(idCode, phoneNumber, resolve, reject)
-        })
+            this.__signHandleMid(idCode, phoneNumber, resolve, reject);
+        });
     }
 
     signWithSmartId({ idCode, country }) {
         return new Promise((resolve, reject) => {
-            this.__signHandleSmartid(idCode, country, resolve, reject)
-        })
+            this.__signHandleSmartid(idCode, country, resolve, reject);
+        });
     }
 
     __signHandleIdCard(resolve, reject) {
@@ -91,13 +93,13 @@ class IdentificationManager {
                     certificate: certificate,
                 }).then(({ ok, data }) => {
                     if (ok && data.success) {
-                        this.__doSign(data.digest, resolve, reject)
+                        this.__doSign(data.digest, resolve, reject);
                     } else {
-                        reject(data)
+                        reject(data);
                     }
-                })
-            }, reject)
-        }, reject)
+                });
+            }, reject);
+        }, reject);
     }
 
     __doSign(dataDigest, resolve, reject) {
@@ -108,15 +110,15 @@ class IdentificationManager {
                     csrfmiddlewaretoken: this.csrfToken,
                     signature_value: signature,
                 },
-                "PATCH"
+                "PATCH",
             ).then(({ ok, data }) => {
                 if (ok && data.success) {
-                    resolve(data)
+                    resolve(data);
                 } else {
-                    reject(data)
+                    reject(data);
                 }
-            })
-        }, reject)
+            });
+        }, reject);
     }
 
     __signHandleMid(idCode, phoneNumber, resolve, reject) {
@@ -127,17 +129,17 @@ class IdentificationManager {
             csrfmiddlewaretoken: this.csrfToken,
         }).then(({ ok, data }) => {
             if (ok && data.success) {
-                resolve(data)
+                resolve(data);
             } else {
-                reject(data)
+                reject(data);
             }
-        })
+        });
     }
 
     midStatus() {
         return new Promise((resolve, reject) => {
-            this.checkStatus(this.mobileIdUrl, resolve, reject)
-        })
+            this.checkStatus(this.mobileIdUrl, resolve, reject);
+        });
     }
 
     __signHandleSmartid(idCode, country, resolve, reject) {
@@ -147,22 +149,22 @@ class IdentificationManager {
             csrfmiddlewaretoken: this.csrfToken,
         }).then(({ ok, data }) => {
             if (ok && data.success) {
-                resolve(data)
+                resolve(data);
             } else {
-                reject(data)
+                reject(data);
             }
-        })
+        });
     }
 
     smartidStatus() {
         return new Promise((resolve, reject) => {
-            this.checkStatus(this.smartIdUrl, resolve, reject)
-        })
+            this.checkStatus(this.smartIdUrl, resolve, reject);
+        });
     }
 
     getError(err) {
-        return this.idCardManager.getError(err)
+        return this.idCardManager.getError(err);
     }
 }
 
-export default IdentificationManager
+export default IdentificationManager;

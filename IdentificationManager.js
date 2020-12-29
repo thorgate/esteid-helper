@@ -18,7 +18,9 @@ const request = async (url, data, method = "POST") => {
         try {
             const data = JSON.parse(responseText);
             data.success = data.status === "success";
-            data.pending = `${response.status}` === "202";
+            if (typeof data.pending === "undefined") {
+                data.pending = `${response.status}` === "202";
+            }
             return {
                 data,
                 ok: response.ok,

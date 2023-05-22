@@ -53,13 +53,32 @@ class IdCardManager {
     constructor(language) {
         this.language = language || LANGUAGE_ET;
 
+        // filled after a successful getCertificate() call
         this.certificate = null;
+        this.supportedSignatureAlgorithms = null;
+
+        // filled after a successful sign() call
+        this.signatureAlgorithm = null;
     }
 
     initializeIdCard() {
+        /**
+         * Use the first available global backend in the order of preference:
+         *
+         * 1. web-eid
+         * 2. hwcrypto
+         *
+         * The backend should be included in the page and should expose a global object.
+         *
+         * - hwcrypto.js - does it out of the box
+         * - web-eid.js - one needs to include the dist/iife build, see
+         *    https://github.com/web-eid/web-eid.js#without-a-module-system
+         */
         return new Promise(function (resolve, reject) {
-            if (window.hwcrypto.use("auto")) {
-                resolve();
+            if (typeof window.webeid !== "undefined") {
+                resolve("web-eid");
+            } else if (typeof window.hwcrypto !== "undefined" && window.hwcrypto.use("auto")) {
+                resolve("hwcrypto");
             } else {
                 reject("Backend selection failed");
             }
@@ -67,30 +86,27 @@ class IdCardManager {
     }
 
     /**
-     * Calls `window.hwcrypto.getCertificate()` with the selected language.
-     * Resolves to a HEX-encoded certificate. The certificate is to be embedded into the XML signature
-     * that is generated on the backend.
+     * Requests the Web-eID browser extension to retrieve the signing certificate of the user with the
+     * selected language. The certificate must be sent to the back end for preparing the
+     * digital signature container and passed to sign() as the first parameter (hence why we also cache it
+     * on the instance).
      *
-     * `hwcrypto.getCertificate()` resolves to a certificate object ("handle"):
-     * {
-     *      encoded: UInt8Array, raw certificate
-     *      hex: String, HEX-encoded certificate
-     * }
+     * see more - https://github.com/web-eid/web-eid.js#get-signing-certificate
      *
-     * The "handle" is to be used in the sign() call. So we also store it on the instance.
-     *
-     * https://github.com/hwcrypto/hwcrypto.js/wiki/APIv2#getcertificate
+     * Note: SupportedSignatureAlgorithms are available on the instance after the promise resolves.
      *
      * @returns {Promise<String>}
      */
     getCertificate() {
         return new Promise((resolve, reject) => {
-            const lParam = { lang: this.language };
+            const options = { lang: this.language };
 
-            window.hwcrypto.getCertificate(lParam).then(
-                (rCert) => {
-                    this.certificate = rCert;
-                    resolve(rCert.hex);
+            window.webeid.getSigningCertificate(options).then(
+                ({ certificate, supportedSignatureAlgorithms }) => {
+                    this.certificate = certificate;
+                    this.supportedSignatureAlgorithms = supportedSignatureAlgorithms;
+
+                    resolve(certificate);
                 },
                 (err) => {
                     reject(err);
@@ -100,30 +116,37 @@ class IdCardManager {
     }
 
     /**
-     * Calls `window.hwcrypto.sign()` over a HEX-encoded data
-     * Resolves to a HEX-encoded signature which is to be embedded into the XML signature
-     * that is generated on the backend.
+     * Requests the Web-eID browser extension to sign a document hash. The certificate must be retrieved
+     * using getCertificate method above (getSigningCertificate in web-eid) and the hash must be retrieved
+     * from the back end creating the container and its nested XML signatures.
      *
-     * Signing is performed using the certificate "handle" obtained by `getCertificate()`.
+     * Returns a LibrarySignResponse object:
      *
-     * `hwcrypto.sign()` resolves to a signature object:
-     * {
-     *      value: Uint8Array, raw signature;
-     *      hex: String, HEX-encoded signature
+     * interface LibrarySignResponse {
+     *   // Signature algorithm
+     *   signatureAlgorithm: SignatureAlgorithm;
+     *
+     *   // The base64-encoded signature
+     *   signature: string;
      * }
      *
-     * https://github.com/hwcrypto/hwcrypto.js/wiki/APIv2#sign
+     * The known valid hashFunction values are:
+     * SHA-224, SHA-256, SHA-384, SHA-512, SHA3-224, SHA3-256, SHA3-384 and SHA3-512.
      *
-     * @param hexData
+     * see more - https://github.com/web-eid/web-eid.js#get-signing-certificate
+     *
+     * @param data - base64 encoded hash of the data to be signed
+     * @param hashFunction - one of the supported hash functions. Defaults to SHA-256.
      * @returns {Promise<String>}
      */
-    signHexData(hexData) {
+    signHexData(data, hashFunction = "SHA-256") {
         return new Promise((resolve, reject) => {
-            const lParam = { lang: this.language };
+            const options = { lang: this.language };
 
-            window.hwcrypto.sign(this.certificate, { type: "SHA-256", hex: hexData }, lParam).then(
-                (signature) => {
-                    resolve(signature.hex);
+            window.webeid.sign(this.certificate, data, hashFunction, options).then(
+                (signResponse) => {
+                    this.signatureAlgorithm = signResponse.signatureAlgorithm;
+                    resolve(signResponse.signature);
                 },
                 (err) => {
                     reject(err);
@@ -146,6 +169,10 @@ class IdCardManager {
 
     /* Errors */
     getError(err) {
+        // TODO: mapping for web-eid errors too
+        //
+        // https://github.com/web-eid/web-eid.js#error-codes
+
         if (typeof errorMessages[err] === "undefined") {
             err = "technical_error";
         }

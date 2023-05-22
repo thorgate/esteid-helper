@@ -8,67 +8,57 @@ typeof globalThis !== 'undefined'
   : typeof global !== 'undefined'
   ? global
   : {};
-function $parcel$defineInteropFlag(a) {
-  Object.defineProperty(a, '__esModule', {value: true, configurable: true});
-}
-function $parcel$export(e, n, v, s) {
-  Object.defineProperty(e, n, {get: v, set: s, enumerable: true, configurable: true});
-}
-
-$parcel$defineInteropFlag(module.exports);
-
-$parcel$export(module.exports, "default", () => $c1a81161e8a4b016$export$2e2bcd8739ae039);
-const $2a99bb2e5ab596b6$export$216983ec6089ef64 = "EST";
-const $2a99bb2e5ab596b6$export$449b009f68cc9554 = "ENG";
-const $2a99bb2e5ab596b6$export$3d353c79207db73 = "RUS";
-const $2a99bb2e5ab596b6$export$1ed6e4462bf475ae = "LIT";
-const $2a99bb2e5ab596b6$var$LANGUAGES = [
-    $2a99bb2e5ab596b6$export$216983ec6089ef64,
-    $2a99bb2e5ab596b6$export$449b009f68cc9554,
-    $2a99bb2e5ab596b6$export$3d353c79207db73,
-    $2a99bb2e5ab596b6$export$1ed6e4462bf475ae
+const $5e8e457e33c20981$export$216983ec6089ef64 = "EST";
+const $5e8e457e33c20981$export$449b009f68cc9554 = "ENG";
+const $5e8e457e33c20981$export$3d353c79207db73 = "RUS";
+const $5e8e457e33c20981$export$1ed6e4462bf475ae = "LIT";
+const $5e8e457e33c20981$var$LANGUAGES = [
+    $5e8e457e33c20981$export$216983ec6089ef64,
+    $5e8e457e33c20981$export$449b009f68cc9554,
+    $5e8e457e33c20981$export$3d353c79207db73,
+    $5e8e457e33c20981$export$1ed6e4462bf475ae
 ];
-const $2a99bb2e5ab596b6$var$errorMessages = {
+const $5e8e457e33c20981$var$errorMessages = {
     user_cancel: {
-        [$2a99bb2e5ab596b6$export$216983ec6089ef64]: "Allkirjastamine katkestati",
-        [$2a99bb2e5ab596b6$export$449b009f68cc9554]: "Signing was cancelled",
-        [$2a99bb2e5ab596b6$export$1ed6e4462bf475ae]: "Pasirašymas nutrauktas",
-        [$2a99bb2e5ab596b6$export$3d353c79207db73]: "Подпись была отменена"
+        [$5e8e457e33c20981$export$216983ec6089ef64]: "Allkirjastamine katkestati",
+        [$5e8e457e33c20981$export$449b009f68cc9554]: "Signing was cancelled",
+        [$5e8e457e33c20981$export$1ed6e4462bf475ae]: "Pasirašymas nutrauktas",
+        [$5e8e457e33c20981$export$3d353c79207db73]: "Подпись была отменена"
     },
     no_certificates: {
-        [$2a99bb2e5ab596b6$export$216983ec6089ef64]: "Sertifikaate ei leitud",
-        [$2a99bb2e5ab596b6$export$449b009f68cc9554]: "Certificate not found",
-        [$2a99bb2e5ab596b6$export$1ed6e4462bf475ae]: "Nerastas sertifikatas",
-        [$2a99bb2e5ab596b6$export$3d353c79207db73]: "Сертификат не найден"
+        [$5e8e457e33c20981$export$216983ec6089ef64]: "Sertifikaate ei leitud",
+        [$5e8e457e33c20981$export$449b009f68cc9554]: "Certificate not found",
+        [$5e8e457e33c20981$export$1ed6e4462bf475ae]: "Nerastas sertifikatas",
+        [$5e8e457e33c20981$export$3d353c79207db73]: "Сертификат не найден"
     },
     invalid_argument: {
-        [$2a99bb2e5ab596b6$export$216983ec6089ef64]: "Vigane sertifikaadi identifikaator",
-        [$2a99bb2e5ab596b6$export$449b009f68cc9554]: "Invalid certificate identifier",
-        [$2a99bb2e5ab596b6$export$1ed6e4462bf475ae]: "Neteisingas sertifikato identifikatorius",
-        [$2a99bb2e5ab596b6$export$3d353c79207db73]: "Неверный идентификатор сертификата"
+        [$5e8e457e33c20981$export$216983ec6089ef64]: "Vigane sertifikaadi identifikaator",
+        [$5e8e457e33c20981$export$449b009f68cc9554]: "Invalid certificate identifier",
+        [$5e8e457e33c20981$export$1ed6e4462bf475ae]: "Neteisingas sertifikato identifikatorius",
+        [$5e8e457e33c20981$export$3d353c79207db73]: "Неверный идентификатор сертификата"
     },
     no_implementation: {
-        [$2a99bb2e5ab596b6$export$216983ec6089ef64]: "Vajalik tarkvara on puudu",
-        [$2a99bb2e5ab596b6$export$449b009f68cc9554]: "Unable to find software",
-        [$2a99bb2e5ab596b6$export$1ed6e4462bf475ae]: "Nerasta programinės įranga",
-        [$2a99bb2e5ab596b6$export$3d353c79207db73]: "Отсутствует необходимое программное обеспечение"
+        [$5e8e457e33c20981$export$216983ec6089ef64]: "Vajalik tarkvara on puudu",
+        [$5e8e457e33c20981$export$449b009f68cc9554]: "Unable to find software",
+        [$5e8e457e33c20981$export$1ed6e4462bf475ae]: "Nerasta programinės įranga",
+        [$5e8e457e33c20981$export$3d353c79207db73]: "Отсутствует необходимое программное обеспечение"
     },
     technical_error: {
-        [$2a99bb2e5ab596b6$export$216983ec6089ef64]: "Tehniline viga",
-        [$2a99bb2e5ab596b6$export$449b009f68cc9554]: "Technical error",
-        [$2a99bb2e5ab596b6$export$1ed6e4462bf475ae]: "Techninė klaida",
-        [$2a99bb2e5ab596b6$export$3d353c79207db73]: "Техническая ошибка"
+        [$5e8e457e33c20981$export$216983ec6089ef64]: "Tehniline viga",
+        [$5e8e457e33c20981$export$449b009f68cc9554]: "Technical error",
+        [$5e8e457e33c20981$export$1ed6e4462bf475ae]: "Techninė klaida",
+        [$5e8e457e33c20981$export$3d353c79207db73]: "Техническая ошибка"
     },
     not_allowed: {
-        [$2a99bb2e5ab596b6$export$216983ec6089ef64]: "Veebis allkirjastamise k\xe4ivitamine on v\xf5imalik vaid https aadressilt",
-        [$2a99bb2e5ab596b6$export$449b009f68cc9554]: "Web signing is allowed only from https:// URL",
-        [$2a99bb2e5ab596b6$export$1ed6e4462bf475ae]: "Web signing is allowed only from https:// URL",
-        [$2a99bb2e5ab596b6$export$3d353c79207db73]: "Подпись в интернете возможна только с URL-ов, начинающихся с https://"
+        [$5e8e457e33c20981$export$216983ec6089ef64]: "Veebis allkirjastamise k\xe4ivitamine on v\xf5imalik vaid https aadressilt",
+        [$5e8e457e33c20981$export$449b009f68cc9554]: "Web signing is allowed only from https:// URL",
+        [$5e8e457e33c20981$export$1ed6e4462bf475ae]: "Web signing is allowed only from https:// URL",
+        [$5e8e457e33c20981$export$3d353c79207db73]: "Подпись в интернете возможна только с URL-ов, начинающихся с https://"
     }
 };
-class $2a99bb2e5ab596b6$var$IdCardManager {
+class $5e8e457e33c20981$var$IdCardManager {
     constructor(language){
-        this.language = language || $2a99bb2e5ab596b6$export$216983ec6089ef64;
+        this.language = language || $5e8e457e33c20981$export$216983ec6089ef64;
         // filled after a successful getCertificate() call
         this.certificate = null;
         this.supportedSignatureAlgorithms = null;
@@ -158,23 +148,23 @@ class $2a99bb2e5ab596b6$var$IdCardManager {
         return this._language;
     }
     set language(l) {
-        if ($2a99bb2e5ab596b6$var$LANGUAGES.indexOf(l) !== -1) this._language = l;
+        if ($5e8e457e33c20981$var$LANGUAGES.indexOf(l) !== -1) this._language = l;
     }
     /* Errors */ getError(err) {
         // TODO: mapping for web-eid errors too
         //
         // https://github.com/web-eid/web-eid.js#error-codes
-        if (typeof $2a99bb2e5ab596b6$var$errorMessages[err] === "undefined") err = "technical_error";
+        if (typeof $5e8e457e33c20981$var$errorMessages[err] === "undefined") err = "technical_error";
         return {
             error_code: err,
-            message: $2a99bb2e5ab596b6$var$errorMessages[err][this.language]
+            message: $5e8e457e33c20981$var$errorMessages[err][this.language]
         };
     }
 }
-var $2a99bb2e5ab596b6$export$2e2bcd8739ae039 = $2a99bb2e5ab596b6$var$IdCardManager;
+var $5e8e457e33c20981$export$2e2bcd8739ae039 = $5e8e457e33c20981$var$IdCardManager;
 
 
-const $f7e37f3b1834997f$var$request = async (url, data, method = "POST")=>{
+const $1d20638d290f5332$var$request = async (url, data, method = "POST")=>{
     const headers = {
         "Content-Type": "application/json"
     };
@@ -208,10 +198,10 @@ const $f7e37f3b1834997f$var$request = async (url, data, method = "POST")=>{
         return {};
     }
 };
-class $f7e37f3b1834997f$var$IdentificationManager {
+class $1d20638d290f5332$var$IdentificationManager {
     constructor({ language: language , idUrl: idUrl , mobileIdUrl: mobileIdUrl , smartIdUrl: smartIdUrl , csrfToken: csrfToken , pollInterval: pollInterval  }){
         // construct the idCardManager
-        this.idCardManager = new (0, $2a99bb2e5ab596b6$export$2e2bcd8739ae039)(language);
+        this.idCardManager = new (0, $5e8e457e33c20981$export$2e2bcd8739ae039)(language);
         this.idUrl = idUrl;
         this.mobileIdUrl = mobileIdUrl;
         this.smartIdUrl = smartIdUrl;
@@ -223,7 +213,7 @@ class $f7e37f3b1834997f$var$IdentificationManager {
         const pollInterval = this.pollInterval;
         const csrfmiddlewaretoken = this.csrfToken;
         const doRequest = ()=>{
-            $f7e37f3b1834997f$var$request(endpoint, {
+            $1d20638d290f5332$var$request(endpoint, {
                 csrfmiddlewaretoken: csrfmiddlewaretoken
             }, "PATCH").then(({ ok: ok , data: data  })=>{
                 if (ok && data.pending) setTimeout(()=>doRequest(), pollInterval);
@@ -253,7 +243,7 @@ class $f7e37f3b1834997f$var$IdentificationManager {
     __signHandleIdCard(resolve, reject) {
         this.idCardManager.initializeIdCard().then(()=>{
             this.idCardManager.getCertificate().then((certificate)=>{
-                $f7e37f3b1834997f$var$request(this.idUrl, {
+                $1d20638d290f5332$var$request(this.idUrl, {
                     csrfmiddlewaretoken: this.csrfToken,
                     certificate: certificate
                 }).then(({ ok: ok , data: data  })=>{
@@ -265,7 +255,7 @@ class $f7e37f3b1834997f$var$IdentificationManager {
     }
     __doSign(dataDigest, resolve, reject) {
         this.idCardManager.signHexData(dataDigest).then((signature)=>{
-            $f7e37f3b1834997f$var$request(this.idUrl, {
+            $1d20638d290f5332$var$request(this.idUrl, {
                 csrfmiddlewaretoken: this.csrfToken,
                 signature_value: signature
             }, "PATCH").then(({ ok: ok , data: data  })=>{
@@ -275,7 +265,7 @@ class $f7e37f3b1834997f$var$IdentificationManager {
         }, reject);
     }
     __signHandleMid(idCode, phoneNumber, resolve, reject) {
-        $f7e37f3b1834997f$var$request(this.mobileIdUrl, {
+        $1d20638d290f5332$var$request(this.mobileIdUrl, {
             id_code: idCode,
             phone_number: phoneNumber,
             language: this.language,
@@ -291,7 +281,7 @@ class $f7e37f3b1834997f$var$IdentificationManager {
         });
     }
     __signHandleSmartid(idCode, country, resolve, reject) {
-        $f7e37f3b1834997f$var$request(this.smartIdUrl, {
+        $1d20638d290f5332$var$request(this.smartIdUrl, {
             id_code: idCode,
             country: country,
             csrfmiddlewaretoken: this.csrfToken
@@ -309,24 +299,25 @@ class $f7e37f3b1834997f$var$IdentificationManager {
         return this.idCardManager.getError(err);
     }
 }
-var $f7e37f3b1834997f$export$2e2bcd8739ae039 = $f7e37f3b1834997f$var$IdentificationManager;
+var $1d20638d290f5332$export$2e2bcd8739ae039 = $1d20638d290f5332$var$IdentificationManager;
 
 
 
-var $86b2f64ba9c405c1$export$2e2bcd8739ae039 = {
-    IdentificationManager: (0, $f7e37f3b1834997f$export$2e2bcd8739ae039),
+var $db3fe735658ff64c$export$2e2bcd8739ae039 = {
+    IdentificationManager: (0, $1d20638d290f5332$export$2e2bcd8739ae039),
     Languages: {
-        ET: (0, $2a99bb2e5ab596b6$export$216983ec6089ef64),
-        EN: (0, $2a99bb2e5ab596b6$export$449b009f68cc9554),
-        RU: (0, $2a99bb2e5ab596b6$export$3d353c79207db73),
-        LT: (0, $2a99bb2e5ab596b6$export$1ed6e4462bf475ae)
+        ET: (0, $5e8e457e33c20981$export$216983ec6089ef64),
+        EN: (0, $5e8e457e33c20981$export$449b009f68cc9554),
+        RU: (0, $5e8e457e33c20981$export$3d353c79207db73),
+        LT: (0, $5e8e457e33c20981$export$1ed6e4462bf475ae)
     }
 };
 
 
-const $c1a81161e8a4b016$var$globalObject = typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : typeof $parcel$global !== "undefined" ? $parcel$global : {};
-$c1a81161e8a4b016$var$globalObject.Esteid = (0, $86b2f64ba9c405c1$export$2e2bcd8739ae039);
-var $c1a81161e8a4b016$export$2e2bcd8739ae039 = (0, $86b2f64ba9c405c1$export$2e2bcd8739ae039);
+const $0dba17e9e38b844e$var$globalObject = typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : typeof $parcel$global !== "undefined" ? $parcel$global : {};
+$0dba17e9e38b844e$var$globalObject.Esteid = (0, $db3fe735658ff64c$export$2e2bcd8739ae039);
+var $0dba17e9e38b844e$export$2e2bcd8739ae039 = (0, $db3fe735658ff64c$export$2e2bcd8739ae039);
 
 
-//# sourceMappingURL=Esteid.main.js.map
+export {$0dba17e9e38b844e$export$2e2bcd8739ae039 as default};
+//# sourceMappingURL=module.js.map

@@ -1,26 +1,30 @@
 import IdCardManager from "./IdCardManager";
 
-async function postForm(url, data) {
+function postForm(url, data) {
     const formData = Object.entries(data)
         .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
         .join("&");
-    try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: formData,
-        });
-        const data = await response.json();
-        return {
-            data,
-            ok: response.ok,
-        };
-    } catch (err) {
-        console.log(err);
-        return {};
-    }
+
+    return fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData,
+    }).then(
+        (response) => {
+            return response.json().then((data) => {
+                return {
+                    data,
+                    ok: response.ok,
+                };
+            });
+        },
+        (err) => {
+            console.log(err);
+            return {};
+        },
+    );
 }
 
 class LegacyIdentificationManager {

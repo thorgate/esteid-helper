@@ -335,25 +335,28 @@
   var IdentificationManager_default = IdentificationManager;
 
   // LegacyIdentificationManager.js
-  async function postForm(url, data) {
+  function postForm(url, data) {
     const formData = Object.entries(data).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: formData
-      });
-      const data2 = await response.json();
-      return {
-        data: data2,
-        ok: response.ok
-      };
-    } catch (err) {
-      console.log(err);
-      return {};
-    }
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: formData
+    }).then(
+      (response) => {
+        return response.json().then((data2) => {
+          return {
+            data: data2,
+            ok: response.ok
+          };
+        });
+      },
+      (err) => {
+        console.log(err);
+        return {};
+      }
+    );
   }
   var LegacyIdentificationManager = class {
     constructor(kwargs) {

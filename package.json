@@ -5,9 +5,8 @@
     "author": "Thorgate <hi@thorgate.eu>",
     "scripts": {
         "dev": "parcel watch",
-        "build": "npm run build:browser && npm run build:browser:min && npm run build:module && npm run build:module:min",
-        "build:module": "esbuild global.js --platform=node --outfile=dist/module.js",
-        "build:module:min": "esbuild global.js --bundle --minify --platform=node --outfile=dist/module.min.js",
+        "build": "npm run build:browser && npm run build:browser:min && npm run build:module",
+        "build:module": "esbuild global.js --platform=node --outfile=module.js",
         "build:browser": "esbuild global.js --platform=browser --bundle --outfile=dist/Esteid.main.web.js",
         "build:browser:min": "esbuild global.js --platform=browser --bundle --minify --outfile=dist/Esteid.main.web.min.js",
         "lint": "eslint *.js",
@@ -16,7 +15,7 @@
     "source": "./global.js",
     "main": "dist/Esteid.main.js",
     "browser": "dist/Esteid.main.web.js",
-    "module": "dist/module.js",
+    "module": "module.js",
     "repository": {
         "type": "git",
         "url": "https://github.com/thorgate/esteid-helper"

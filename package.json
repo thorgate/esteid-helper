@@ -1,36 +1,41 @@
 {
-  "name": "esteid-helper",
-  "version": "0.5.0",
-  "description": "",
-  "author": "Thorgate <hi@thorgate.eu>",
-  "scripts": {
-    "dev": "parcel watch",
-    "build": "parcel build",
-    "lint": "eslint *.js",
-    "prettier": "prettier --write *.js"
-  },
-  "source": "./global.js",
-  "main": "dist/Esteid.main.js",
-  "module": "dist/module.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/thorgate/esteid-helper"
-  },
-  "devDependencies": {
-    "@web-eid/web-eid-library": "^1.0.1",
-    "eslint": "^7.13.0",
-    "eslint-config-prettier": "^6.15.0",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-prettier": "^3.1.4",
-    "parcel": "^2.8.3",
-    "prettier": "^2.2.0"
-  },
-  "dependencies": {},
-  "prettier": {
-    "printWidth": 120,
-    "tabWidth": 4,
-    "trailingComma": "all"
-  },
-  "private": true,
-  "license": "BSD"
+    "name": "esteid-helper",
+    "version": "0.5.0",
+    "description": "",
+    "author": "Thorgate <hi@thorgate.eu>",
+    "scripts": {
+        "dev": "parcel watch",
+        "build": "npm run build:browser && npm run build:browser:min && npm run build:module && npm run build:module:min",
+        "build:module": "esbuild global.js --platform=node --outfile=dist/module.js",
+        "build:module:min": "esbuild global.js --bundle --minify --platform=node --outfile=dist/module.min.js",
+        "build:browser": "esbuild global.js --platform=browser --bundle --outfile=dist/Esteid.main.web.js",
+        "build:browser:min": "esbuild global.js --platform=browser --bundle --minify --outfile=dist/Esteid.main.web.min.js",
+        "lint": "eslint *.js",
+        "prettier": "prettier --write *.js"
+    },
+    "source": "./global.js",
+    "main": "dist/Esteid.main.js",
+    "browser": "dist/Esteid.main.web.js",
+    "module": "dist/module.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/thorgate/esteid-helper"
+    },
+    "devDependencies": {
+        "@web-eid/web-eid-library": "^2.0.0",
+        "eslint": "^7.13.0",
+        "eslint-config-prettier": "^6.15.0",
+        "eslint-plugin-import": "^2.22.1",
+        "eslint-plugin-prettier": "^3.1.4",
+        "esbuild": "0.17.19",
+        "prettier": "^2.2.0"
+    },
+    "dependencies": {},
+    "prettier": {
+        "printWidth": 120,
+        "tabWidth": 4,
+        "trailingComma": "all"
+    },
+    "private": true,
+    "license": "BSD"
 }

@@ -34,6 +34,17 @@ const errorMessages = {
         [LANGUAGE_RU]: "Отсутствует необходимое программное обеспечение",
     },
 
+    version_mismatch: {
+        [LANGUAGE_ET]:
+            "Allkirjastamise tarkvara ja brauseri laienduse versioonid ei ühti. Palun uuendage oma id-kaardi tarkvara.",
+        [LANGUAGE_EN]:
+            "The versions of the signing software and browser extension do not match. Please update your ID card software.",
+        [LANGUAGE_LT]:
+            "Parakstīšanas programmas un pārlūka paplašinājuma versijas nesakrīt. Lūdzu, atjauniniet savu ID kartes programmatūru.",
+        [LANGUAGE_RU]:
+            "Версии программы для подписания и расширения браузера не совпадают. Пожалуйста, обновите программное обеспечение для вашей идентификационной карты.",
+    },
+
     technical_error: {
         [LANGUAGE_ET]: "Tehniline viga",
         [LANGUAGE_EN]: "Technical error",
@@ -167,17 +178,60 @@ class IdCardManager {
         }
     }
 
+    getWebeidErrorMapping(error) {
+        const errorCode = (error ? error.code : null) || null;
+
+        switch (errorCode) {
+            case "ERR_WEBEID_CONTEXT_INSECURE":
+                return "not_allowed";
+
+            case "ERR_WEBEID_ACTION_TIMEOUT":
+                return "technical_error";
+
+            case "ERR_WEBEID_USER_CANCELLED":
+            case "ERR_WEBEID_USER_TIMEOUT":
+                return "user_cancel";
+
+            case "ERR_WEBEID_VERSION_MISMATCH":
+            case "ERR_WEBEID_VERSION_INVALID":
+                return "version_mismatch";
+
+            case "ERR_WEBEID_EXTENSION_UNAVAILABLE":
+            case "ERR_WEBEID_NATIVE_UNAVAILABLE":
+                return "no_implementation";
+
+            case "ERR_WEBEID_NATIVE_FATAL": {
+                if (error.message.includes("https")) {
+                    return "not_allowed";
+                }
+
+                return "technical_error";
+            }
+
+            default:
+            case "ERR_WEBEID_UNKNOWN_ERROR":
+            case "ERR_WEBEID_NATIVE_INVALID_ARGUMENT":
+            case "ERR_WEBEID_ACTION_PENDING":
+            case "ERR_WEBEID_MISSING_PARAMETER":
+                return "technical_error";
+        }
+    }
+
     /* Errors */
     getError(err) {
         // TODO: mapping for web-eid errors too
         //
         // https://github.com/web-eid/web-eid.js#error-codes
 
+        let errorCode;
+
         if (typeof errorMessages[err] === "undefined") {
-            err = "technical_error";
+            errorCode = this.getWebeidErrorMapping(err) || "technical_error";
+        } else {
+            errorCode = err;
         }
 
-        return { error_code: err, message: errorMessages[err][this.language] };
+        return { error_code: errorCode, message: errorMessages[errorCode][this.language], raw: err };
     }
 }
 

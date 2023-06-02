@@ -179,6 +179,7 @@ class IdCardManager {
     }
 
     getWebeidErrorMapping(error) {
+        // ref: https://github.com/web-eid/web-eid.js#error-codes
         const errorCode = (error ? error.code : null) || null;
 
         switch (errorCode) {
@@ -219,10 +220,6 @@ class IdCardManager {
 
     /* Errors */
     getError(err) {
-        // TODO: mapping for web-eid errors too
-        //
-        // https://github.com/web-eid/web-eid.js#error-codes
-
         let errorCode;
 
         if (typeof errorMessages[err] === "undefined") {

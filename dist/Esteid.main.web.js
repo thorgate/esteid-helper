@@ -494,15 +494,16 @@
   var LegacyIdentificationManager_default = LegacyIdentificationManager;
 
   // lib.js
+  var Languages = {
+    ET: LANGUAGE_ET,
+    EN: LANGUAGE_EN,
+    RU: LANGUAGE_RU,
+    LT: LANGUAGE_LT
+  };
   var lib_default = {
     IdentificationManager: IdentificationManager_default,
     LegacyIdentificationManager: LegacyIdentificationManager_default,
-    Languages: {
-      ET: LANGUAGE_ET,
-      EN: LANGUAGE_EN,
-      RU: LANGUAGE_RU,
-      LT: LANGUAGE_LT
-    }
+    Languages
   };
 
   // global.js

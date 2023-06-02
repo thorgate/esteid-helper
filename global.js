@@ -1,4 +1,4 @@
-import lib from "./lib.js";
+import lib, { IdentificationManager, Languages, LegacyIdentificationManager } from "./lib.js";
 
 const globalObject =
     typeof globalThis !== "undefined"
@@ -12,5 +12,7 @@ const globalObject =
         : {};
 
 globalObject.Esteid = lib;
+
+export { IdentificationManager, Languages, LegacyIdentificationManager };
 
 export default lib;

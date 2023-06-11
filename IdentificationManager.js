@@ -162,6 +162,41 @@ class IdentificationManager {
         });
     }
 
+    authenticateWithIdCard(options) {
+        return new Promise((yay, nay) => {
+            request(
+                this.idUrl,
+                {
+                    csrfmiddlewaretoken: this.csrfToken,
+                },
+                "POST",
+            ).then(({ ok, data }) => {
+                if (ok && data.pending) {
+                    return this.idCardManager.initializeIdCard().then(() => {
+                        return this.idCardManager.authenticate(data.nonce, options || {}).then((result) => {
+                            return request(
+                                this.idUrl,
+                                {
+                                    csrfmiddlewaretoken: this.csrfToken,
+                                    ...result,
+                                },
+                                "PATCH",
+                            ).then(({ ok, data }) => {
+                                if (ok && data.success) {
+                                    yay(data);
+                                } else {
+                                    nay(data);
+                                }
+                            }, nay);
+                        }, nay);
+                    }, nay);
+                } else {
+                    nay(data);
+                }
+            });
+        });
+    }
+
     getError(err) {
         return this.idCardManager.getError(err);
     }

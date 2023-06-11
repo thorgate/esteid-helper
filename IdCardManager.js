@@ -38,11 +38,14 @@ const errorMessages = {
         [LANGUAGE_ET]:
             "Allkirjastamise tarkvara ja brauseri laienduse versioonid ei ühti. Palun uuendage oma id-kaardi tarkvara.",
         [LANGUAGE_EN]:
-            "The versions of the signing software and browser extension do not match. Please update your ID card software.",
+            "The versions of the signing software and browser extension do not match." +
+            " Please update your ID card software.",
         [LANGUAGE_LT]:
-            "Parakstīšanas programmas un pārlūka paplašinājuma versijas nesakrīt. Lūdzu, atjauniniet savu ID kartes programmatūru.",
+            "Parakstīšanas programmas un pārlūka paplašinājuma versijas nesakrīt. Lūdzu, " +
+            "atjauniniet savu ID kartes programmatūru.",
         [LANGUAGE_RU]:
-            "Версии программы для подписания и расширения браузера не совпадают. Пожалуйста, обновите программное обеспечение для вашей идентификационной карты.",
+            "Версии программы для подписания и расширения браузера не совпадают. Пожалуйста, " +
+            "обновите программное обеспечение для вашей идентификационной карты.",
     },
 
     technical_error: {

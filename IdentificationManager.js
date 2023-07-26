@@ -173,22 +173,39 @@ class IdentificationManager {
             ).then(({ ok, data }) => {
                 if (ok && data.pending) {
                     return this.idCardManager.initializeIdCard().then(() => {
-                        return this.idCardManager.authenticate(data.nonce, options || {}).then((result) => {
-                            return request(
-                                this.idUrl,
-                                {
-                                    csrfmiddlewaretoken: this.csrfToken,
-                                    ...result,
-                                },
-                                "PATCH",
-                            ).then(({ ok, data }) => {
-                                if (ok && data.success) {
-                                    yay(data);
+                        return this.idCardManager.authenticate(data.nonce, options || {}).then(
+                            (result) => {
+                                return request(
+                                    this.idUrl,
+                                    {
+                                        csrfmiddlewaretoken: this.csrfToken,
+                                        ...result,
+                                    },
+                                    "PATCH",
+                                ).then(({ ok, data }) => {
+                                    if (ok && data.success) {
+                                        yay(data);
+                                    } else {
+                                        nay(data);
+                                    }
+                                }, nay);
+                            },
+                            (error) => {
+                                if (error.code === "ERR_WEBEID_USER_CANCELLED") {
+                                    return request(
+                                        this.idUrl,
+                                        {
+                                            csrfmiddlewaretoken: this.csrfToken,
+                                        },
+                                        "DELETE",
+                                    ).then(() => {
+                                        nay(error);
+                                    }, nay);
                                 } else {
-                                    nay(data);
+                                    nay(error);
                                 }
-                            }, nay);
-                        }, nay);
+                            },
+                        );
                     }, nay);
                 } else {
                     nay(data);

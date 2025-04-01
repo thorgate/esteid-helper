@@ -1,6 +1,6 @@
 import IdCardManager from "./IdCardManager";
 
-const request = async (url, data, method = "POST") => {
+const request = async (url, data, method = "POST", retries = 3) => {
     const headers = {
         "Content-Type": "application/json",
     };
@@ -28,6 +28,13 @@ const request = async (url, data, method = "POST") => {
             return {};
         }
     } catch (err) {
+        const retriesRemaining = retries - 1;
+        if (retriesRemaining > 0) {
+            console.log(`Error fetching ${url}: ${err}, waiting for 1000ms before retrying.`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            console.log(`Retrying ${url}, ${retriesRemaining} tries remaining.`);
+            return await request(url, data, method, retriesRemaining);
+        }
         console.log(err);
         return {};
     }

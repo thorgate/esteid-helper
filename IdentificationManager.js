@@ -10,24 +10,8 @@ const request = async (url, data, method = "POST", retries = 3) => {
         headers["X-CSRFToken"] = data.csrfmiddlewaretoken;
         body = JSON.stringify(data || {});
     }
-    try {
-        const response = await fetch(url, { method, headers, body });
 
-        const responseText = await response.text();
-
-        try {
-            const data = JSON.parse(responseText);
-            data.success = data.status === "success";
-            data.pending = `${response.status}` === "202";
-            return {
-                data,
-                ok: response.ok,
-            };
-        } catch (err) {
-            console.log("Failed to parse response as JSON", responseText);
-            return {};
-        }
-    } catch (err) {
+    const onError = async (err) => {
         const retriesRemaining = retries - 1;
         if (retriesRemaining > 0) {
             console.log(`Error fetching ${url}: ${err}, waiting for 1000ms before retrying.`);
@@ -37,6 +21,30 @@ const request = async (url, data, method = "POST", retries = 3) => {
         }
         console.log(err);
         return {};
+    }
+
+    try {
+        const response = await fetch(url, { method, headers, body });
+        if (`${response.status}` !== "410") {
+            const responseText = await response.text();
+
+            try {
+                const data = JSON.parse(responseText);
+                data.success = data.status === "success";
+                data.pending = `${response.status}` === "202";
+                return {
+                    data,
+                    ok: response.ok,
+                };
+            } catch (err) {
+                console.log("Failed to parse response as JSON", responseText);
+                return {};
+            }
+        } else {
+            return await onError(new Error("The session is gone, we need to try and refresh the page."));
+        }
+    } catch (err) {
+        return await onError(err);
     }
 };
 

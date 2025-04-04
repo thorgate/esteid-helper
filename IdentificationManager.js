@@ -25,23 +25,22 @@ const request = async (url, data, method = "POST", retries = 3) => {
 
     try {
         const response = await fetch(url, { method, headers, body });
-        if (`${response.status}` !== "410") {
-            const responseText = await response.text();
-
-            try {
-                const data = JSON.parse(responseText);
-                data.success = data.status === "success";
-                data.pending = `${response.status}` === "202";
-                return {
-                    data,
-                    ok: response.ok,
-                };
-            } catch (err) {
-                console.log("Failed to parse response as JSON", responseText);
-                return {};
-            }
-        } else {
+        if (`${response.status}` === "410") {
             return await onError(new Error("The session is gone, we need to try and refresh the page."));
+        }
+        const responseText = await response.text();
+
+        try {
+            const data = JSON.parse(responseText);
+            data.success = data.status === "success";
+            data.pending = `${response.status}` === "202";
+            return {
+                data,
+                ok: response.ok,
+            };
+        } catch (err) {
+            console.log("Failed to parse response as JSON", responseText);
+            return {};
         }
     } catch (err) {
         return await onError(err);

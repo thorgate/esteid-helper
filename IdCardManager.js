@@ -34,6 +34,20 @@ const errorMessages = {
         [LANGUAGE_RU]: "Отсутствует необходимое программное обеспечение",
     },
 
+    version_mismatch: {
+        [LANGUAGE_ET]:
+            "Allkirjastamise tarkvara ja brauseri laienduse versioonid ei ühti. Palun uuendage oma id-kaardi tarkvara.",
+        [LANGUAGE_EN]:
+            "The versions of the signing software and browser extension do not match." +
+            " Please update your ID card software.",
+        [LANGUAGE_LT]:
+            "Parakstīšanas programmas un pārlūka paplašinājuma versijas nesakrīt. Lūdzu, " +
+            "atjauniniet savu ID kartes programmatūru.",
+        [LANGUAGE_RU]:
+            "Версии программы для подписания и расширения браузера не совпадают. Пожалуйста, " +
+            "обновите программное обеспечение для вашей идентификационной карты.",
+    },
+
     technical_error: {
         [LANGUAGE_ET]: "Tehniline viga",
         [LANGUAGE_EN]: "Technical error",
@@ -53,13 +67,32 @@ class IdCardManager {
     constructor(language) {
         this.language = language || LANGUAGE_ET;
 
+        // filled after a successful getCertificate() call
         this.certificate = null;
+        this.supportedSignatureAlgorithms = null;
+
+        // filled after a successful sign() call
+        this.signatureAlgorithm = null;
     }
 
     initializeIdCard() {
+        /**
+         * Use the first available global backend in the order of preference:
+         *
+         * 1. web-eid
+         * 2. hwcrypto
+         *
+         * The backend should be included in the page and should expose a global object.
+         *
+         * - hwcrypto.js - does it out of the box
+         * - web-eid.js - one needs to include the dist/iife build, see
+         *    https://github.com/web-eid/web-eid.js#without-a-module-system
+         */
         return new Promise(function (resolve, reject) {
-            if (window.hwcrypto.use("auto")) {
-                resolve();
+            if (typeof window.webeid !== "undefined") {
+                resolve("web-eid");
+            } else if (typeof window.hwcrypto !== "undefined" && window.hwcrypto.use("auto")) {
+                resolve("hwcrypto");
             } else {
                 reject("Backend selection failed");
             }
@@ -67,30 +100,27 @@ class IdCardManager {
     }
 
     /**
-     * Calls `window.hwcrypto.getCertificate()` with the selected language.
-     * Resolves to a HEX-encoded certificate. The certificate is to be embedded into the XML signature
-     * that is generated on the backend.
+     * Requests the Web-eID browser extension to retrieve the signing certificate of the user with the
+     * selected language. The certificate must be sent to the back end for preparing the
+     * digital signature container and passed to sign() as the first parameter (hence why we also cache it
+     * on the instance).
      *
-     * `hwcrypto.getCertificate()` resolves to a certificate object ("handle"):
-     * {
-     *      encoded: UInt8Array, raw certificate
-     *      hex: String, HEX-encoded certificate
-     * }
+     * see more - https://github.com/web-eid/web-eid.js#get-signing-certificate
      *
-     * The "handle" is to be used in the sign() call. So we also store it on the instance.
-     *
-     * https://github.com/hwcrypto/hwcrypto.js/wiki/APIv2#getcertificate
+     * Note: SupportedSignatureAlgorithms are available on the instance after the promise resolves.
      *
      * @returns {Promise<String>}
      */
     getCertificate() {
         return new Promise((resolve, reject) => {
-            const lParam = { lang: this.language };
+            const options = { lang: this.language };
 
-            window.hwcrypto.getCertificate(lParam).then(
-                (rCert) => {
-                    this.certificate = rCert;
-                    resolve(rCert.hex);
+            window.webeid.getSigningCertificate(options).then(
+                ({ certificate, supportedSignatureAlgorithms }) => {
+                    this.certificate = certificate;
+                    this.supportedSignatureAlgorithms = supportedSignatureAlgorithms;
+
+                    resolve(certificate);
                 },
                 (err) => {
                     reject(err);
@@ -100,30 +130,86 @@ class IdCardManager {
     }
 
     /**
-     * Calls `window.hwcrypto.sign()` over a HEX-encoded data
-     * Resolves to a HEX-encoded signature which is to be embedded into the XML signature
-     * that is generated on the backend.
+     * Requests the Web-eID browser extension to sign a document hash. The certificate must be retrieved
+     * using getCertificate method above (getSigningCertificate in web-eid) and the hash must be retrieved
+     * from the back end creating the container and its nested XML signatures.
      *
-     * Signing is performed using the certificate "handle" obtained by `getCertificate()`.
+     * Returns a LibrarySignResponse object:
      *
-     * `hwcrypto.sign()` resolves to a signature object:
-     * {
-     *      value: Uint8Array, raw signature;
-     *      hex: String, HEX-encoded signature
+     * interface LibrarySignResponse {
+     *   // Signature algorithm
+     *   signatureAlgorithm: SignatureAlgorithm;
+     *
+     *   // The base64-encoded signature
+     *   signature: string;
      * }
      *
-     * https://github.com/hwcrypto/hwcrypto.js/wiki/APIv2#sign
+     * The known valid hashFunction values are:
+     * SHA-224, SHA-256, SHA-384, SHA-512, SHA3-224, SHA3-256, SHA3-384 and SHA3-512.
      *
-     * @param hexData
+     * see more - https://github.com/web-eid/web-eid.js#get-signing-certificate
+     *
+     * @param data - base64 encoded hash of the data to be signed
+     * @param hashFunction - one of the supported hash functions. Defaults to SHA-256.
      * @returns {Promise<String>}
      */
-    signHexData(hexData) {
+    signHexData(data, hashFunction = "SHA-256") {
         return new Promise((resolve, reject) => {
-            const lParam = { lang: this.language };
+            const options = { lang: this.language };
 
-            window.hwcrypto.sign(this.certificate, { type: "SHA-256", hex: hexData }, lParam).then(
-                (signature) => {
-                    resolve(signature.hex);
+            window.webeid.sign(this.certificate, data, hashFunction, options).then(
+                (signResponse) => {
+                    this.signatureAlgorithm = signResponse.signatureAlgorithm;
+                    resolve(signResponse.signature);
+                },
+                (err) => {
+                    reject(err);
+                },
+            );
+        });
+    }
+
+    /**
+     * Requests the Web-eID browser extension to authenticate the user. The nonce must be recently retrieved
+     *  from the back end. The result contains the Web eID authentication token that must be sent to the
+     *  back end for validation.
+     *
+     * @param {string} nonce - base64 encoded nonce, generated by the back end, at least 256 bits of entropy
+     * @param {object} options
+     * @param {string} options.lang - ISO 639-1 two-letter language code to specify the Web-eID native application's user interface language
+     * @param {number} options.timeout - user interaction timeout in milliseconds. Default: 120000 (2 minutes)
+     * @returns {Promise<LibraryAuthenticateResponse>}
+     *
+     * Ref: https://github.com/web-eid/web-eid.js#authenticate-result
+     *
+     * interface LibraryAuthenticateResponse {
+     *     // base64-encoded DER encoded authentication certificate of the user
+     *     unverifiedCertificate: string;
+     *
+     *     // algorithm used to produce the authentication signature
+     *     algorithm:
+     *         | "ES256" | "ES384" | "ES512"  // ECDSA
+     *         | "PS256" | "PS384" | "PS512"  // RSASSA-PSS
+     *         | "RS256" | "RS384" | "RS512"; // RSASSA-PKCS1-v1_5
+     *
+     *     // base64-encoded signature of the token
+     *     signature: string;
+     *
+     *     // type identifier and version of the token format separated by a colon character.
+     *     //  example "web-eid:1.0"
+     *     format: string
+     *
+     *     // URL identifying the name and version of the application that issued the token
+     *     //  example "https://web-eid.eu/web-eid-app/releases/2.0.0+0"
+     *     appVersion: string;
+     */
+    authenticate(nonce, options) {
+        const authOptions = { lang: this.language, ...options };
+
+        return new Promise((resolve, reject) => {
+            return window.webeid.authenticate(nonce, authOptions).then(
+                (authResponse) => {
+                    resolve(authResponse);
                 },
                 (err) => {
                     reject(err);
@@ -144,13 +230,57 @@ class IdCardManager {
         }
     }
 
+    getWebeidErrorMapping(error) {
+        // ref: https://github.com/web-eid/web-eid.js#error-codes
+        const errorCode = (error ? error.code : null) || null;
+
+        switch (errorCode) {
+            case "ERR_WEBEID_CONTEXT_INSECURE":
+                return "not_allowed";
+
+            case "ERR_WEBEID_ACTION_TIMEOUT":
+                return "technical_error";
+
+            case "ERR_WEBEID_USER_CANCELLED":
+            case "ERR_WEBEID_USER_TIMEOUT":
+                return "user_cancel";
+
+            case "ERR_WEBEID_VERSION_MISMATCH":
+            case "ERR_WEBEID_VERSION_INVALID":
+                return "version_mismatch";
+
+            case "ERR_WEBEID_EXTENSION_UNAVAILABLE":
+            case "ERR_WEBEID_NATIVE_UNAVAILABLE":
+                return "no_implementation";
+
+            case "ERR_WEBEID_NATIVE_FATAL": {
+                if (error.message.includes("https")) {
+                    return "not_allowed";
+                }
+
+                return "technical_error";
+            }
+
+            default:
+            case "ERR_WEBEID_UNKNOWN_ERROR":
+            case "ERR_WEBEID_NATIVE_INVALID_ARGUMENT":
+            case "ERR_WEBEID_ACTION_PENDING":
+            case "ERR_WEBEID_MISSING_PARAMETER":
+                return "technical_error";
+        }
+    }
+
     /* Errors */
     getError(err) {
+        let errorCode;
+
         if (typeof errorMessages[err] === "undefined") {
-            err = "technical_error";
+            errorCode = this.getWebeidErrorMapping(err) || "technical_error";
+        } else {
+            errorCode = err;
         }
 
-        return { error_code: err, message: errorMessages[err][this.language] };
+        return { error_code: errorCode, message: errorMessages[errorCode][this.language], raw: err };
     }
 }
 

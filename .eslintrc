@@ -18,7 +18,7 @@
 
         // Set max line length to 140 chars. Prettier formats to 80.
         // Using this rule so comments would be kept in more readable format
-        "max-len": ["warn", 120],
+        "max-len": ["warn", 140],
 
         // Allow unary ++ operator in for loop afterthoughts
         "no-plusplus": "off",

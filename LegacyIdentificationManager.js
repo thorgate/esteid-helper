@@ -12,17 +12,39 @@ function postForm(url, data) {
         },
         body: formData,
     }).then(
-        (response) => {
-            return response.json().then((data) => {
+        async (response) => {
+            const responseText = await response.text();
+            const result = {
+                ok: response.ok,
+                status: response.status,
+                statusText: response.statusText,
+            };
+            try {
+                const parsed = JSON.parse(responseText);
                 return {
-                    data,
-                    ok: response.ok,
+                    ...result,
+                    data: parsed,
                 };
-            });
+            } catch (err) {
+                console.log("Failed to parse response as JSON", responseText);
+                return {
+                    ...result,
+                    data: {
+                        raw: responseText,
+                    },
+                };
+            }
         },
         (err) => {
             console.log(err);
-            return {};
+            return {
+                ok: false,
+                status: 0,
+                statusText: "fetch_error",
+                data: {
+                    error: err && err.message ? err.message : String(err),
+                },
+            };
         },
     );
 }

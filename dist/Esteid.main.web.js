@@ -244,21 +244,42 @@
     try {
       const response = await fetch(url, { method, headers, body });
       const responseText = await response.text();
+      const result = {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText
+      };
+      const contentType = response.headers.get("content-type");
+      if (contentType) {
+        result.contentType = contentType;
+      }
       try {
         const data2 = JSON.parse(responseText);
         data2.success = data2.status === "success";
         data2.pending = `${response.status}` === "202";
         return {
-          data: data2,
-          ok: response.ok
+          ...result,
+          data: data2
         };
       } catch (err) {
         console.log("Failed to parse response as JSON", responseText);
-        return {};
+        return {
+          ...result,
+          data: {
+            raw: responseText
+          }
+        };
       }
     } catch (err) {
       console.log(err);
-      return {};
+      return {
+        ok: false,
+        status: 0,
+        statusText: "fetch_error",
+        data: {
+          error: err && err.message ? err.message : String(err)
+        }
+      };
     }
   };
   var IdentificationManager = class {
@@ -442,17 +463,43 @@
       },
       body: formData
     }).then(
-      (response) => {
-        return response.json().then((data2) => {
+      async (response) => {
+        const responseText = await response.text();
+        const result = {
+          ok: response.ok,
+          status: response.status,
+          statusText: response.statusText
+        };
+        const contentType = response.headers.get("content-type");
+        if (contentType) {
+          result.contentType = contentType;
+        }
+        try {
+          const parsed = JSON.parse(responseText);
           return {
-            data: data2,
-            ok: response.ok
+            ...result,
+            data: parsed
           };
-        });
+        } catch (err) {
+          console.log("Failed to parse response as JSON", responseText);
+          return {
+            ...result,
+            data: {
+              raw: responseText
+            }
+          };
+        }
       },
       (err) => {
         console.log(err);
-        return {};
+        return {
+          ok: false,
+          status: 0,
+          statusText: "fetch_error",
+          data: {
+            error: err && err.message ? err.message : String(err)
+          }
+        };
       }
     );
   }

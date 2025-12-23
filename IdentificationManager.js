@@ -14,22 +14,38 @@ const request = async (url, data, method = "POST") => {
         const response = await fetch(url, { method, headers, body });
 
         const responseText = await response.text();
-
+        const result = {
+            ok: response.ok,
+            status: response.status,
+            statusText: response.statusText,
+        };
         try {
             const data = JSON.parse(responseText);
             data.success = data.status === "success";
             data.pending = `${response.status}` === "202";
             return {
+                ...result,
                 data,
-                ok: response.ok,
             };
         } catch (err) {
             console.log("Failed to parse response as JSON", responseText);
-            return {};
+            return {
+                ...result,
+                data: {
+                    raw: responseText,
+                },
+            };
         }
     } catch (err) {
         console.log(err);
-        return {};
+        return {
+            ok: false,
+            status: 0,
+            statusText: "fetch_error",
+            data: {
+                error: err && err.message ? err.message : String(err),
+            },
+        };
     }
 };
 
